@@ -1,5 +1,6 @@
 using HealthChecks.UI.Client;
 using Licensing.Data;
+using Licensing.Keys;
 using Licensing.Skus;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -60,6 +61,7 @@ public class Program
             options.UseNpgsql(_connectionString);
         });
 
+
         // Register custom health checks
         services.AddSingleton<StartupHealthCheck>(); // Singleton for stateful checks
         services.AddHealthChecks()
@@ -74,6 +76,7 @@ public class Program
 
         services.AddControllers(); // Add support for controllers
         services.AddScoped<ISkuService, SkuService>();
+        services.AddScoped<IKeyService, KeyService>();
 
 
         // Add Swagger services

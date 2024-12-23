@@ -9,7 +9,7 @@ using System.Xml.Linq;
 
 namespace Licensing.Skus
 {
-    [Route("api/sku")]
+    [Route("api/v1/sku")]
     [ApiController]
     public class SkuController : ControllerBase
     {

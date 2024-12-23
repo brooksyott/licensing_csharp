@@ -1,4 +1,5 @@
-﻿using Licensing.Skus;
+﻿using Licensing.Keys;
+using Licensing.Skus;
 using Microsoft.EntityFrameworkCore;
 
 namespace Licensing.Data
@@ -10,8 +11,38 @@ namespace Licensing.Data
         }
 
         public DbSet<Sku> Skus { get; set; }
+        public DbSet<KeyEntity> Keys { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            OnModelCreatingSkus(modelBuilder);
+            OnModelCreatingCerts(modelBuilder);
+        }
+
+        protected void OnModelCreatingCerts(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<KeyEntity>(entity =>
+            {
+                entity.ToTable("keys", "public");
+                entity.HasKey(e => e.Id);
+            });
+
+            modelBuilder.Entity<KeyEntity>(entity =>
+            {
+                entity.Property(e => e.CreatedAt)
+                      .HasColumnName("created_at")
+                      .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                      .ValueGeneratedOnAdd();
+
+                entity.Property(e => e.UpdatedAt)
+                      .HasColumnName("updated_at")
+                      .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                      .ValueGeneratedOnAddOrUpdate();
+            });
+        }
+
+        protected void OnModelCreatingSkus(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Sku>(entity =>
             {
