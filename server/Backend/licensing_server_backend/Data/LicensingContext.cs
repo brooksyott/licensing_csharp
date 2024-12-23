@@ -30,6 +30,19 @@ namespace Licensing.Data
                 .HasIndex(s => s.Name)
                 .IsUnique();
 
+            modelBuilder.Entity<Sku>(entity =>
+            {
+                entity.Property(e => e.CreatedAt)
+                      .HasColumnName("created_at")
+                      .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                      .ValueGeneratedOnAdd();
+
+                entity.Property(e => e.UpdatedAt)
+                      .HasColumnName("updated_at")
+                      .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                      .ValueGeneratedOnAddOrUpdate();
+            });
+
             modelBuilder.Entity<Sku>().HasData(
                 new Sku
                 {

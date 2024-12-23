@@ -12,13 +12,12 @@ namespace Licensing.Skus
         [Column("id")]
         public int Id { get; set; } = -1;
 
-        [Required]
         [Column("created_at")]
-        public DateTime CreatedAt { get; set; } = DateTime.MinValue;
+        public DateTime CreatedAt { get; private set; }
 
-        [Required]
         [Column("updated_at")]
-        public DateTime UpdatedAt { get; set; } = DateTime.MinValue;
+        [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
+        public DateTime UpdatedAt { get; private set; }
 
         [Required]
         [Column("sku")]
@@ -26,6 +25,17 @@ namespace Licensing.Skus
         public required string SkuCode { get; set; }
 
         [Required]
+        [Column("name")]
+        [StringLength(255)] // Adjust max length if needed
+        public required string Name { get; set; }
+
+        [Column("description")]
+        [StringLength(255)] // Adjust max length if needed
+        public string? Description { get; set; }
+    }
+
+    public class SkuUpdate
+    {
         [Column("name")]
         [StringLength(255)] // Adjust max length if needed
         public required string Name { get; set; }

@@ -1,6 +1,8 @@
-﻿using Licensing.Data;
+﻿using Licensing.Common;
+using Licensing.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json.Linq;
 using System.Xml.Linq;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -20,70 +22,76 @@ namespace Licensing.Skus
 
         // GET: api/<SkuController>
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<object>>> GetSkus()
+        public async Task<IActionResult> GetSkus([FromQuery] BasicQueryFilter basicQueryFilter)
         {
-            var skus = await _skuService.GetSkusAsync();
-            if (skus == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(skus);
+            var result = await _skuService.GetSkusAsync(basicQueryFilter);
+            return result.ToActionResult();
         }
 
         // GET api/<SkuController>/5
         [HttpGet("id/{id}")]
-        public async Task<ActionResult<object>> GetSkuById(int id)
+        public async Task<IActionResult> GetSkuById(int id)
         {
-            var sku = await _skuService.GetSkusByIdAsync(id);
-            if (sku == null)
-            {
-                return NotFound();
-            }
+            var result = await _skuService.GetSkusByIdAsync(id);
+            return result.ToActionResult();
 
-            return Ok(sku);
         }
 
         [HttpGet("name/{name}")]
-        public async Task<ActionResult<object>> GetSkuByName(string name)
+        public async Task<IActionResult> GetSkuByName(string name)
         {
-            var sku = await _skuService.GetSkusByNameAsync(name);
-            if (sku == null)
-            {
-                return NotFound("");
-            }
-
-            return Ok(sku);
+            var result = await _skuService.GetSkusByNameAsync(name);
+            return result.ToActionResult();
         }
 
         [HttpGet("{skuCode}")]
-        public async Task<ActionResult<object>> GetSku(string skuCode)
+        public async Task<IActionResult> GetSku(string skuCode)
         {
-            var sku = await _skuService.GetSkusByCodeAsync(skuCode);
-            if (sku == null)
-            {
-                return NotFound();
-            }
+            var result = await _skuService.GetSkusByCodeAsync(skuCode);
+            return result.ToActionResult();
 
-            return Ok(sku);
         }
 
         // POST api/<SkuController>
         [HttpPost]
-        public void Post([FromBody] string value)
+        public async Task<IActionResult> Post([FromBody] Sku value)
         {
+            var result = await _skuService.AddSkuAsync(value);
+            return result.ToActionResult();
         }
 
         // PUT api/<SkuController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        [HttpPut("id/{id}")]
+        [HttpPatch("id/{id}")]
+        public async Task<IActionResult> Put(int id, [FromBody] SkuUpdate value)
         {
+            var result = await _skuService.UpdateSkuAsync(id, value);
+            return result.ToActionResult();
+        }
+
+        // PUT api/<SkuController>/5
+        [HttpPut("{skuCode}")]
+        [HttpPatch("{skuCode}")]
+        public async Task<IActionResult> Put(string skuCode, [FromBody] SkuUpdate value)
+        {
+            var result = await _skuService.UpdateSkuAsync(skuCode, value);
+            return result.ToActionResult();
         }
 
         // DELETE api/<SkuController>/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
+        [HttpDelete("id/{id}")]
+        public async Task<IActionResult> Delete(int id)
         {
+            var result = await _skuService.DeleteSkuAsync(id);
+            return result.ToActionResult();
+        }
+
+        // DELETE api/<SkuController>/5
+        [HttpDelete("{skuCode}")]
+        public async Task<IActionResult> Delete(string skuCode)
+        {
+            var result = await _skuService.DeleteSkuAsync(skuCode);
+            return result.ToActionResult();
         }
     }
 }
