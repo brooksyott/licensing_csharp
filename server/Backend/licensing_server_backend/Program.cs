@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Logging;
+using Serilog;
+using Serilog.Core;
 using System.ComponentModel;
 using System.Data.Common;
 
@@ -17,11 +20,22 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
+        builder.Logging.ClearProviders();
+
+        Log.Logger = new LoggerConfiguration()
+            .ReadFrom.Configuration(builder.Configuration) // Reads configuration from appsettings.json
+            .Enrich.FromLogContext()
+            //.WriteTo.Console() // Write logs to console
+            .CreateLogger();
+
         builder.Configuration
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
             .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
             .AddEnvironmentVariables();
+
+
+        builder.Host.UseSerilog(); // Replace the default logger
 
         _connectionString = builder.Configuration.GetConnectionString("PostgresConnection");
 
@@ -57,9 +71,10 @@ public class Program
                     tags: new[] { "db", "postgres" });
 
         services.AddSingleton(sp => new PostgresHealthCheck(_connectionString)); // Pass the connection string
-        services.AddScoped<ISkuService, SkuService>();
 
         services.AddControllers(); // Add support for controllers
+        services.AddScoped<ISkuService, SkuService>();
+
 
         // Add Swagger services
         services.AddEndpointsApiExplorer();

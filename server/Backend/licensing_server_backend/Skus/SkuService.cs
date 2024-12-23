@@ -4,17 +4,25 @@ using Microsoft.EntityFrameworkCore;
 using System.ComponentModel;
 using System.Data.Common;
 using System.Xml.Linq;
+using Microsoft.Extensions.Logging;
 
 namespace Licensing.Skus
 {
     public class SkuService : ISkuService
     {
         private readonly LicensingContext _dbContext;
+        private readonly ILogger<SkuService> _logger;
 
-        public SkuService(LicensingContext context)
+        public SkuService(ILogger<SkuService> logger, LicensingContext context)
         {
             _dbContext = context;
+            _logger = logger;
         }
+
+        //public SkuService(LicensingContext context)
+        //{
+        //    _dbContext = context;
+        //}
 
         /// <summary>
         /// Get all SKUs
@@ -22,21 +30,29 @@ namespace Licensing.Skus
         /// <returns></returns>
         public async Task<ServiceResult<PaginatedResults>> GetSkusAsync(BasicQueryFilter filter)
         {
-            var skus = await _dbContext.Skus.Skip(filter.Offset).Take(filter.Limit).AsNoTracking().ToListAsync();
-            if (skus == null)
+            try
             {
-                return new ServiceResult<PaginatedResults>() 
-                { 
-                    Status = ResultStatusCode.Success, 
-                    Data = new PaginatedResults() { Limit = filter.Limit, Offset = filter.Offset, Results = new object[] { } } 
+                var skus = await _dbContext.Skus.OrderBy(x => x.Id).Skip(filter.Offset).Take(filter.Limit).AsNoTracking().ToListAsync();
+                if (skus == null)
+                {
+                    return new ServiceResult<PaginatedResults>()
+                    {
+                        Status = ResultStatusCode.Success,
+                        Data = new PaginatedResults() { Limit = filter.Limit, Offset = filter.Offset, Results = new object[] { } }
+                    };
+                }
+
+                return new ServiceResult<PaginatedResults>()
+                {
+                    Status = ResultStatusCode.Success,
+                    Data = new PaginatedResults() { Limit = filter.Limit, Offset = filter.Offset, Count = skus.Count, Results = skus }
                 };
             }
-
-            return new ServiceResult<PaginatedResults>()
+            catch (Exception ex)
             {
-                Status = ResultStatusCode.Success,
-                Data = new PaginatedResults() { Limit = filter.Limit, Offset = filter.Offset, Count = skus.Count, Results = skus }
-            };
+                _logger.LogError(ex, $"Error getting skus: {ex}");
+                return ReturnException<PaginatedResults>(ex);
+            }
         }
 
         /// <summary>
@@ -57,7 +73,7 @@ namespace Licensing.Skus
             }
             catch (Exception ex)
             {
-                return ReturnException(ex);
+                return ReturnException<Sku>(ex, $"Error getting SKU by code");
             }
         }
 
@@ -79,7 +95,7 @@ namespace Licensing.Skus
             }
             catch (Exception ex)
             {
-                return ReturnException(ex);
+                return ReturnException<Sku>(ex);
             }
         }
 
@@ -101,7 +117,7 @@ namespace Licensing.Skus
             } 
             catch(Exception ex)
             {
-                return ReturnException(ex);
+                return ReturnException<Sku>(ex);
             }
         }
 
@@ -120,7 +136,7 @@ namespace Licensing.Skus
             }
             catch (Exception ex)
             {
-                return ReturnException(ex);
+                return ReturnException<Sku>(ex);
             }
 
         }
@@ -150,7 +166,7 @@ namespace Licensing.Skus
             }
             catch (Exception ex)
             {
-                return ReturnException(ex);
+                return ReturnException<Sku>(ex);
             }
         }
 
@@ -179,7 +195,7 @@ namespace Licensing.Skus
             }
             catch (Exception ex)
             {
-                return ReturnException(ex);
+                return ReturnException<Sku>(ex);
             }
         }
 
@@ -205,7 +221,7 @@ namespace Licensing.Skus
             }
             catch (Exception ex)
             {
-                return ReturnException(ex);
+                return ReturnException<Sku>(ex);
             }
         }
 
@@ -226,7 +242,7 @@ namespace Licensing.Skus
             }
             catch (Exception ex)
             {
-                return ReturnException(ex);
+                return ReturnException<Sku>(ex);
             }
         }
 
@@ -234,9 +250,13 @@ namespace Licensing.Skus
         /// Returns a service result based on the specified exception
         /// </summary>
         /// <param name="ex"></param>
-        /// <returns></returns>
-        private ServiceResult<Sku> ReturnException(Exception ex)
+        private ServiceResult<T> ReturnException<T>(Exception ex, string logMessage = "")
         {
+            if (String.IsNullOrWhiteSpace(logMessage))
+                _logger.LogError($"{logMessage}");
+            else
+                _logger.LogError($"{logMessage}: {ex.Message}");
+
             switch (ex)
             {
                 case DbUpdateException dbUpdateEx:
@@ -245,24 +265,24 @@ namespace Licensing.Skus
                         var errorMessage = postgresExInner.Message;
                         if (errorMessage.Contains("duplicate"))
                         {
-                            return new ServiceResult<Sku>() { ErrorMessage = new ErrorMessageStruct(postgresExInner.Message), Status = ResultStatusCode.Conflict };
+                            return new ServiceResult<T>() { ErrorMessage = new ErrorMessageStruct(postgresExInner.Message), Status = ResultStatusCode.Conflict };
                         }
 
-                        return new ServiceResult<Sku>() { ErrorMessage = new ErrorMessageStruct(postgresExInner.Message), Status = ResultStatusCode.BadRequest };
+                        return new ServiceResult<T>() { ErrorMessage = new ErrorMessageStruct(postgresExInner.Message), Status = ResultStatusCode.BadRequest };
                     }
                     else
                     {
-                        return new ServiceResult<Sku>() { ErrorMessage = new ErrorMessageStruct(dbUpdateEx.InnerException?.GetType().Name), Status = ResultStatusCode.InternalServerError };
+                        return new ServiceResult<T>() { ErrorMessage = new ErrorMessageStruct(dbUpdateEx.InnerException?.GetType().Name), Status = ResultStatusCode.InternalServerError };
                     }
 
                 case Npgsql.PostgresException postgresEx:
-                    return new ServiceResult<Sku>() { ErrorMessage = new ErrorMessageStruct(postgresEx.Message), Status = ResultStatusCode.InternalServerError };
+                    return new ServiceResult<T>() { ErrorMessage = new ErrorMessageStruct(postgresEx.Message), Status = ResultStatusCode.InternalServerError };
 
                 case InvalidOperationException invalidOpEx:
-                    return new ServiceResult<Sku>() { ErrorMessage = new ErrorMessageStruct(invalidOpEx.Message), Status = ResultStatusCode.BadRequest };
+                    return new ServiceResult<T>() { ErrorMessage = new ErrorMessageStruct(invalidOpEx.Message), Status = ResultStatusCode.BadRequest };
 
                 default:
-                    return new ServiceResult<Sku>() { ErrorMessage = new ErrorMessageStruct(ex.Message), Status = ResultStatusCode.InternalServerError };
+                    return new ServiceResult<T>() { ErrorMessage = new ErrorMessageStruct(ex.Message), Status = ResultStatusCode.InternalServerError };
             }
         }
 
