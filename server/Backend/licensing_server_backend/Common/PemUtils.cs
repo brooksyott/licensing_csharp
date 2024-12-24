@@ -43,10 +43,7 @@ namespace Licensing.Common
 
             return pemContent;
         }
-    }
 
-    public static class RsaKeyLoader
-    {
         public static RSA LoadRsaPrivateKey(string pemContent)
         {
             // Read the entire .pem file
@@ -90,6 +87,30 @@ namespace Licensing.Common
             rsa.ImportSubjectPublicKeyInfo(keyBytes, out _);
 
             return rsa;
+        }
+
+
+        public static string ExportPrivateKey(RSA rsa)
+        {
+            // Export the private key in PKCS#1 format (compatible with OpenSSL)
+            var privateKeyBytes = rsa.ExportRSAPrivateKey();
+            return ConvertToPem(privateKeyBytes, "RSA PRIVATE KEY");
+        }
+
+        public static string ExportPublicKey(RSA rsa)
+        {
+            // Export the public key in X.509 format (compatible with OpenSSL)
+            var publicKeyBytes = rsa.ExportSubjectPublicKeyInfo();
+            return ConvertToPem(publicKeyBytes, "PUBLIC KEY");
+        }
+
+        private static string ConvertToPem(byte[] keyData, string keyType)
+        {
+            // Convert to Base64 format
+            string base64Key = Convert.ToBase64String(keyData, Base64FormattingOptions.InsertLineBreaks);
+
+            // Wrap the key with PEM headers and footers
+            return $"-----BEGIN {keyType}-----\n{base64Key}\n-----END {keyType}-----";
         }
     }
 }

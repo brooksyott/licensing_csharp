@@ -1,4 +1,5 @@
 ﻿using Licensing.Keys;
+using Licensing.License;
 using Licensing.Skus;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,12 +13,36 @@ namespace Licensing.Data
 
         public DbSet<Sku> Skus { get; set; }
         public DbSet<KeyEntity> Keys { get; set; }
+        public DbSet<LicenseEntity> Licenses { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             OnModelCreatingSkus(modelBuilder);
             OnModelCreatingCerts(modelBuilder);
+            OnModelCreatingLicenses(modelBuilder);
+        }
+
+        protected void OnModelCreatingLicenses(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<LicenseEntity>(entity =>
+            {
+                entity.ToTable("licenses", "public");
+                entity.HasKey(e => e.Id);
+            });
+
+            modelBuilder.Entity<LicenseEntity>(entity =>
+            {
+                entity.Property(e => e.CreatedAt)
+                      .HasColumnName("created_at")
+                      .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                      .ValueGeneratedOnAdd();
+
+                entity.Property(e => e.UpdatedAt)
+                      .HasColumnName("updated_at")
+                      .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                      .ValueGeneratedOnAddOrUpdate();
+            });
         }
 
         protected void OnModelCreatingCerts(ModelBuilder modelBuilder)
@@ -74,22 +99,6 @@ namespace Licensing.Data
                       .ValueGeneratedOnAddOrUpdate();
             });
 
-            modelBuilder.Entity<Sku>().HasData(
-                new Sku
-                {
-                    Id = -1,
-                    SkuCode = "SKU-001",
-                    Name = "Standard",
-                    Description = "Standard license"
-                },
-                new Sku
-                {
-                    Id = -2,
-                    SkuCode = "SKU-002",
-                    Name = "Premium",
-                    Description = "Premium license"
-                }
-            );
 
             base.OnModelCreating(modelBuilder);
         }

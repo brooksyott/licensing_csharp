@@ -1,10 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Licensing.Common;
+using Microsoft.AspNetCore.Mvc;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace Licensing.License
 {
-    [Route("api/v1/[controller]")]
+    [Route("api/v1/licenses")]
     [ApiController]
     public class LicenseController : ControllerBase
     {
@@ -17,26 +18,33 @@ namespace Licensing.License
             _tokenService = tokenService;
         }
 
-
-        // GET: api/<LicenseController>
-        [HttpGet]
-        public IEnumerable<string> Get()
+        [HttpGet("{id}")]
+        public async Task<IActionResult> Get([FromQuery] BasicQueryFilter queryFilter, string id)
         {
-            return new string[] { "value1", "value2" };
+            var result = await _tokenService.GetByIdAsync(id);
+            return (ActionResult)result.ToActionResult();
         }
 
-        // GET api/<LicenseController>/5
-        [HttpGet("{id}")]
-        public async Task<string> Get(string id)
+        [HttpGet]
+        public async Task<ActionResult<PaginatedResults>> Get([FromQuery] BasicQueryFilter queryFilter)
         {
-            var jwt = await _tokenService.GenerateTokenAsync(id, "tbd@email.com");
-            return jwt;
+            var result = await _tokenService.GetLicensesAsync(queryFilter);
+            return (ActionResult)result.ToActionResult();
+        }
+
+        [HttpGet("customer/{customerId}")]
+        public async Task<ActionResult<PaginatedResults>> GetByCustomerId([FromQuery] BasicQueryFilter queryFilter, string customerId)
+        {
+            var result = await _tokenService.GetByCustomerIdAsync(customerId, queryFilter);
+            return (ActionResult)result.ToActionResult();
         }
 
         // POST api/<LicenseController>
         [HttpPost]
-        public void Post([FromBody] string value)
+        public async Task<IActionResult> Post([FromBody] GenerateLicenseRequestBody licenseRequest)
         {
+            var licenseResult = await _tokenService.GenerateTokenAsync(licenseRequest);
+            return licenseResult.ToActionResult();
         }
 
         // PUT api/<LicenseController>/5

@@ -142,8 +142,8 @@ namespace Licensing.Keys
                 using (RSA rsa = RSA.Create(2048))
                 {
                     // Generate PEM format private and public keys
-                    string privateKeyPem = ExportPrivateKey(rsa);
-                    string publicKeyPem = ExportPublicKey(rsa);
+                    string privateKeyPem = PemUtils.ExportPrivateKey(rsa);
+                    string publicKeyPem = PemUtils.ExportPublicKey(rsa);
 
                     // Create response content as files
                     var result = new
@@ -237,28 +237,6 @@ namespace Licensing.Keys
             }
         }
 
-        private static string ExportPrivateKey(RSA rsa)
-        {
-            // Export the private key in PKCS#1 format (compatible with OpenSSL)
-            var privateKeyBytes = rsa.ExportRSAPrivateKey();
-            return ConvertToPem(privateKeyBytes, "RSA PRIVATE KEY");
-        }
-
-        private static string ExportPublicKey(RSA rsa)
-        {
-            // Export the public key in X.509 format (compatible with OpenSSL)
-            var publicKeyBytes = rsa.ExportSubjectPublicKeyInfo();
-            return ConvertToPem(publicKeyBytes, "PUBLIC KEY");
-        }
-
-        private static string ConvertToPem(byte[] keyData, string keyType)
-        {
-            // Convert to Base64 format
-            string base64Key = Convert.ToBase64String(keyData, Base64FormattingOptions.InsertLineBreaks);
-
-            // Wrap the key with PEM headers and footers
-            return $"-----BEGIN {keyType}-----\n{base64Key}\n-----END {keyType}-----";
-        }
 
         /// <summary>
         /// Returns a service result based on the specified exception
