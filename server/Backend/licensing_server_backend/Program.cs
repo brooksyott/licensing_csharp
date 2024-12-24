@@ -1,6 +1,7 @@
 using HealthChecks.UI.Client;
 using Licensing.Data;
 using Licensing.Keys;
+using Licensing.License;
 using Licensing.Skus;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -77,6 +78,7 @@ public class Program
         services.AddControllers(); // Add support for controllers
         services.AddScoped<ISkuService, SkuService>();
         services.AddScoped<IKeyService, KeyService>();
+        services.AddScoped<ITokenService, TokenService>();
 
 
         // Add Swagger services
