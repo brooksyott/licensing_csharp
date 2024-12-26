@@ -12,11 +12,11 @@ namespace Licensing.License
         public required string Id { get; set; }
 
         [Column("created_at")]
-        public DateTime CreatedAt { get; private set; }
+        public DateTime CreatedAt { get; protected set; }
 
         [Column("updated_at")]
         [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
-        public DateTime UpdatedAt { get; private set; }
+        public DateTime UpdatedAt { get; protected set; }
 
         [Required]
         [Column("label")]

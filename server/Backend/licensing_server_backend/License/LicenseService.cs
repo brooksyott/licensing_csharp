@@ -34,14 +34,47 @@ namespace Licensing.License
         {
             try
             {
-                var licenses = await _dbContext.Licenses.Where(x => x.CustomerId == customerId).OrderBy(x => x.CreatedAt).Skip(filter.Offset).Take(filter.Limit).AsNoTracking().ToListAsync();
-                if ((licenses == null) || (licenses.Count == 0))
+                //var licenses = await _dbContext.Licenses.Where(x => x.CustomerId == customerId).OrderBy(x => x.CreatedAt).Skip(filter.Offset).Take(filter.Limit).AsNoTracking().ToListAsync();
+                List<LicenseDetailsEntity> licenses = await _dbContext.Licenses
+                                    .Where(x => x.CustomerId == customerId)
+                                    .GroupJoin(
+                                        _dbContext.Customers,
+                                        license => license.CustomerId, // Key from Licenses
+                                        customer => customer.Id,       // Key from Customers
+                                        (license, customers) => new { License = license, Customers = customers })
+                                    .SelectMany(
+                                        lc => lc.Customers.DefaultIfEmpty(), // Perform LEFT JOIN
+                                        (lc, customer) => new LicenseDetailsEntity()
+                                        {
+                                            Id = lc.License.Id,
+                                            CreatedAt = lc.License.CreatedAt,
+                                            UpdatedAt = lc.License.UpdatedAt,
+                                            Label = lc.License.Label,
+                                            IssuedBy = lc.License.IssuedBy,
+                                            License = lc.License.License,
+                                            Description = lc.License.Description,
+                                            Customer = new LicenseCustomerEntity()
+                                            {
+                                                Id = lc.License.CustomerId,
+                                                Name = customer != null ? customer.Name : null // Handle nulls for unmatched customers
+                                            }
+                                        })
+                                    .OrderBy(x => x.CreatedAt).Skip(filter.Offset).Take(filter.Limit).AsNoTracking().ToListAsync();
+
+
+                // var licenses = await _dbContext.Licenses.OrderBy(x => x.CreatedAt).Skip(filter.Offset).Take(filter.Limit).AsNoTracking().ToListAsync();
+                if (licenses == null)
                 {
                     return new ServiceResult<PaginatedResults>()
                     {
-                        Status = ResultStatusCode.NotFound,
+                        Status = ResultStatusCode.Success,
                         Data = new PaginatedResults() { Limit = filter.Limit, Offset = filter.Offset, Results = new object[] { } }
                     };
+                }
+
+                foreach (var license in licenses)
+                {
+                    license.Features = license.GetFeatures(license.License);
                 }
 
                 return new ServiceResult<PaginatedResults>()
@@ -57,20 +90,47 @@ namespace Licensing.License
         }
 
 
-        public async Task<ServiceResult<LicenseEntity>> GetByIdAsync(string licenseId)
+        public async Task<ServiceResult<LicenseDetailsEntity>> GetByIdAsync(string licenseId)
         {
             try
             {
-                var license = await _dbContext.Licenses.Where(x => x.Id == licenseId).AsNoTracking().SingleOrDefaultAsync();
+                //var license = await _dbContext.Licenses.Where(x => x.Id == licenseId).AsNoTracking().SingleOrDefaultAsync();
+                var license = await _dbContext.Licenses
+                    .Where(x => x.Id == licenseId)
+                    .GroupJoin(
+                        _dbContext.Customers,
+                        license => license.CustomerId, // Key from Licenses
+                        customer => customer.Id,       // Key from Customers
+                        (license, customers) => new { License = license, Customers = customers })
+                    .SelectMany(
+                        lc => lc.Customers.DefaultIfEmpty(), // Perform LEFT JOIN
+                        (lc, customer) => new LicenseDetailsEntity()
+                        {
+                            Id = lc.License.Id,
+                            CreatedAt = lc.License.CreatedAt,
+                            UpdatedAt = lc.License.UpdatedAt,
+                            Label = lc.License.Label,
+                            IssuedBy = lc.License.IssuedBy,
+                            License = lc.License.License,
+                            Description = lc.License.Description,
+                            Customer = new LicenseCustomerEntity()
+                            {
+                                Id = lc.License.CustomerId,
+                                Name = customer != null ? customer.Name : null // Handle nulls for unmatched customers
+                            }
+                        })
+                    .AsNoTracking().SingleOrDefaultAsync();
                 if (license == null)
                 {
-                    return new ServiceResult<LicenseEntity>() { Status = ResultStatusCode.NotFound };
+                    return new ServiceResult<LicenseDetailsEntity>() { Status = ResultStatusCode.NotFound };
                 }
-                return new ServiceResult<LicenseEntity>() { Status = ResultStatusCode.Success, Data = license };
+
+                license.Features = license.GetFeatures(license.License);
+                return new ServiceResult<LicenseDetailsEntity>() { Status = ResultStatusCode.Success, Data = license };
             }
             catch (Exception ex)
             {
-                return ReturnException<LicenseEntity>(ex, $"Error getting certificate information by Id");
+                return ReturnException<LicenseDetailsEntity>(ex, $"Error getting certificate information by Id");
             }
         }
 
@@ -78,7 +138,33 @@ namespace Licensing.License
         {
             try
             {
-                var licenses = await _dbContext.Licenses.OrderBy(x => x.CreatedAt).Skip(filter.Offset).Take(filter.Limit).AsNoTracking().ToListAsync();
+                List<LicenseDetailsEntity> licenses = await _dbContext.Licenses
+                                    .GroupJoin(
+                                        _dbContext.Customers,
+                                        license => license.CustomerId, // Key from Licenses
+                                        customer => customer.Id,       // Key from Customers
+                                        (license, customers) => new { License = license, Customers = customers })
+                                    .SelectMany(
+                                        lc => lc.Customers.DefaultIfEmpty(), // Perform LEFT JOIN
+                                        (lc, customer) => new LicenseDetailsEntity()
+                                        {
+                                            Id = lc.License.Id,
+                                            CreatedAt = lc.License.CreatedAt,
+                                            UpdatedAt = lc.License.UpdatedAt,
+                                            Label = lc.License.Label,
+                                            IssuedBy = lc.License.IssuedBy,
+                                            License = lc.License.License,
+                                            Description = lc.License.Description,
+                                            Customer = new LicenseCustomerEntity()
+                                            {
+                                                Id = lc.License.CustomerId,
+                                                Name = customer != null ? customer.Name : null // Handle nulls for unmatched customers
+                                            }
+                                        })
+                                    .OrderBy(x => x.CreatedAt).Skip(filter.Offset).Take(filter.Limit).AsNoTracking().ToListAsync();
+
+
+                // var licenses = await _dbContext.Licenses.OrderBy(x => x.CreatedAt).Skip(filter.Offset).Take(filter.Limit).AsNoTracking().ToListAsync();
                 if (licenses == null)
                 {
                     return new ServiceResult<PaginatedResults>()
@@ -86,6 +172,11 @@ namespace Licensing.License
                         Status = ResultStatusCode.Success,
                         Data = new PaginatedResults() { Limit = filter.Limit, Offset = filter.Offset, Results = new object[] { } }
                     };
+                }
+
+                foreach (var license in licenses)
+                {
+                    license.Features = license.GetFeatures(license.License);
                 }
 
                 return new ServiceResult<PaginatedResults>()
