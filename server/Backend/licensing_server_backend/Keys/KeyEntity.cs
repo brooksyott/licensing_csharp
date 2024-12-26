@@ -24,16 +24,6 @@ namespace Licensing.Keys
         public required string? Label { get; set; }
 
         [Required]
-        [Column("customer_id")]
-        [StringLength(255)] // Adjust max length if needed
-        public required string? CustomerId { get; set; }
-
-        [Required]
-        [Column("site_id")]
-        [StringLength(255)] // Adjust max length if needed
-        public required string? SiteId { get; set; }
-
-        [Required]
         [Column("created_by")]
         [StringLength(255)] // Adjust max length if needed
         public required string? CreatedBy { get; set; }

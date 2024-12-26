@@ -14,7 +14,6 @@ namespace Licensing.Keys
         Task<ServiceResult<KeyEntity>> GenerateKeys(KeyGenerationRequestBody keyGenRequest);
 
         Task<ServiceResult<PaginatedResults>> GetKeysAsync(BasicQueryFilter filter);
-        Task<ServiceResult<PaginatedResults>> GetByCustomerIdAsync(string customerId, BasicQueryFilter filter);
         Task<ServiceResult<KeyEntity>> GetByIdAsync(string keyId);
 
         Task<ServiceResult<byte[]>> DownloadPublicKeyAsync(string keyId);

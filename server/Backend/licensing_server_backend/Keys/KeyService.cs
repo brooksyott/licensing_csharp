@@ -47,33 +47,6 @@ namespace Licensing.Keys
             }
         }
 
-        public async Task<ServiceResult<PaginatedResults>> GetByCustomerIdAsync(string customerId, BasicQueryFilter filter)
-        {
-            try
-            {
-                var skus = await _dbContext.Keys.Where( x => x.CustomerId == customerId).OrderBy(x => x.CreatedAt).Skip(filter.Offset).Take(filter.Limit).AsNoTracking().ToListAsync();
-                if (skus == null)
-                {
-                    return new ServiceResult<PaginatedResults>()
-                    {
-                        Status = ResultStatusCode.Success,
-                        Data = new PaginatedResults() { Limit = filter.Limit, Offset = filter.Offset, Results = new object[] { } }
-                    };
-                }
-
-                return new ServiceResult<PaginatedResults>()
-                {
-                    Status = ResultStatusCode.Success,
-                    Data = new PaginatedResults() { Limit = filter.Limit, Offset = filter.Offset, Count = skus.Count, Results = skus }
-                };
-            }
-            catch (Exception ex)
-            {
-                return ReturnException<PaginatedResults>(ex, "Error getting keys");
-            }
-        }
-
-
         public async Task<ServiceResult<byte[]>> DownloadPublicKeyAsync(string keyId)
         {
             try
@@ -156,8 +129,6 @@ namespace Licensing.Keys
                     {
                         Id = Guid.NewGuid().ToString(),
                         Label = keyGenRequest.Label,
-                        CustomerId = keyGenRequest.CustomerId,
-                        SiteId = keyGenRequest.SiteId,
                         CreatedBy = keyGenRequest.CreatedBy,
                         UpdatedBy = keyGenRequest.UpdatedBy,
                         PrivateKey = result.PrivateKey,
@@ -201,8 +172,6 @@ namespace Licensing.Keys
                 }
 
                 updatedKey.Label = requestBody.Label;
-                updatedKey.CustomerId = requestBody.CustomerId;
-                updatedKey.SiteId = requestBody.SiteId;
                 updatedKey.UpdatedBy = requestBody.UpdatedBy;
                 updatedKey.Description = requestBody.Description;
                 var returedUpdatedSku = _dbContext.Keys.Update(updatedKey);

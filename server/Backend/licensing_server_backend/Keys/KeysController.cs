@@ -36,14 +36,6 @@ namespace Licensing.Keys
         }
 
 
-        // GET: api/<LicenseController>
-        [HttpGet("customer/{customerId}")]
-        public async Task<ActionResult<PaginatedResults>> Get([FromQuery] BasicQueryFilter queryFilter, string customerId)
-        {
-            var result = await _keyService.GetByCustomerIdAsync(customerId, queryFilter);
-            return (ActionResult)result.ToActionResult();
-        }
-
         // GET api/<LicenseController>/5
         [HttpGet("{keyId}/download/public")]
         public async Task<ActionResult<byte[]>> DownloadPublicKey(string keyId)
