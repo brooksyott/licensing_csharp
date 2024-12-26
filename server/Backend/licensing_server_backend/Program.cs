@@ -1,4 +1,5 @@
 using HealthChecks.UI.Client;
+using Licensing.Customers;
 using Licensing.Data;
 using Licensing.Keys;
 using Licensing.License;
@@ -79,6 +80,7 @@ public class Program
         services.AddScoped<ISkuService, SkuService>();
         services.AddScoped<IKeyService, KeyService>();
         services.AddScoped<ILicenseService, LicenseService>();
+        services.AddScoped<ICustomerService, CustomerService>();
 
 
         // Add Swagger services

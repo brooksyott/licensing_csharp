@@ -1,6 +1,7 @@
 ﻿using Licensing.Keys;
 using Licensing.License;
 using Licensing.Skus;
+using Licensing.Customers;
 using Microsoft.EntityFrameworkCore;
 
 namespace Licensing.Data
@@ -14,6 +15,7 @@ namespace Licensing.Data
         public DbSet<Sku> Skus { get; set; }
         public DbSet<KeyEntity> Keys { get; set; }
         public DbSet<LicenseEntity> Licenses { get; set; }
+        public DbSet<CustomerEntity> Customers { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -21,6 +23,29 @@ namespace Licensing.Data
             OnModelCreatingSkus(modelBuilder);
             OnModelCreatingCerts(modelBuilder);
             OnModelCreatingLicenses(modelBuilder);
+            OnModelCreatingCustomers(modelBuilder);
+        }
+
+        protected void OnModelCreatingCustomers(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<CustomerEntity>(entity =>
+            {
+                entity.ToTable("customers", "public");
+                entity.HasKey(e => e.Id);
+            });
+
+            modelBuilder.Entity<CustomerEntity>(entity =>
+            {
+                entity.Property(e => e.CreatedAt)
+                      .HasColumnName("created_at")
+                      .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                      .ValueGeneratedOnAdd();
+
+                entity.Property(e => e.UpdatedAt)
+                      .HasColumnName("updated_at")
+                      .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                      .ValueGeneratedOnAddOrUpdate();
+            });
         }
 
         protected void OnModelCreatingLicenses(ModelBuilder modelBuilder)
