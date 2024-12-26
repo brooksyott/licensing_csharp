@@ -10,9 +10,9 @@ namespace Licensing.License
     public class LicenseController : ControllerBase
     {
         private readonly ILogger<LicenseController> _logger;
-        private readonly ITokenService _tokenService;
+        private readonly ILicenseService _tokenService;
 
-        public LicenseController(ILogger<LicenseController> logger, ITokenService tokenService)
+        public LicenseController(ILogger<LicenseController> logger, ILicenseService tokenService)
         {
             _logger = logger;
             _tokenService = tokenService;
@@ -43,7 +43,7 @@ namespace Licensing.License
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] GenerateLicenseRequestBody licenseRequest)
         {
-            var licenseResult = await _tokenService.GenerateTokenAsync(licenseRequest);
+            var licenseResult = await _tokenService.GenerateLicenseAsync(licenseRequest);
             return licenseResult.ToActionResult();
         }
 

@@ -78,7 +78,7 @@ public class Program
         services.AddControllers(); // Add support for controllers
         services.AddScoped<ISkuService, SkuService>();
         services.AddScoped<IKeyService, KeyService>();
-        services.AddScoped<ITokenService, TokenService>();
+        services.AddScoped<ILicenseService, LicenseService>();
 
 
         // Add Swagger services

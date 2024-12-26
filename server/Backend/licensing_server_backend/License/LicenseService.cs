@@ -8,7 +8,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
-using static Licensing.License.TokenService;
+using static Licensing.License.LicenseService;
 using Licensing.Common;
 using Newtonsoft.Json;
 using Licensing.Data;
@@ -17,13 +17,13 @@ using Microsoft.EntityFrameworkCore;
 namespace Licensing.License
 {
 
-    public class TokenService : ITokenService
+    public class LicenseService : ILicenseService
     {
-        private readonly ILogger<TokenService> _logger;
+        private readonly ILogger<LicenseService> _logger;
         private readonly IKeyService _keyService;
         private readonly LicensingContext _dbContext;
 
-        public TokenService(ILogger<TokenService> logger, IKeyService keyService, LicensingContext context)
+        public LicenseService(ILogger<LicenseService> logger, IKeyService keyService, LicensingContext context)
         {
             _logger = logger;
             _keyService = keyService;
@@ -100,7 +100,7 @@ namespace Licensing.License
             }
         }
 
-        public async Task<ServiceResult<LicenseEntity>> GenerateTokenAsync(GenerateLicenseRequestBody licenseRequest)
+        public async Task<ServiceResult<LicenseEntity>> GenerateLicenseAsync(GenerateLicenseRequestBody licenseRequest)
         {
             if ((licenseRequest == null) || (licenseRequest.IsValid() == false))
             {
@@ -162,7 +162,7 @@ namespace Licensing.License
                                 Id = Guid.NewGuid().ToString(),
                                 Label = licenseRequest.Label,
                                 IssuedBy = licenseRequest.IssuedBy,
-                                Token = newJwt,
+                                License = newJwt,
                                 Description = licenseRequest.Description,
                                 CustomerId = licenseRequest.CustomerId,
                             });

@@ -29,8 +29,8 @@ namespace Licensing.License
         public required string IssuedBy { get; set; }
 
         [Required]
-        [Column("token")]
-        public required string Token { get; set; }
+        [Column("license")]
+        public required string License { get; set; }
 
         [Column("description")]
         [StringLength(20480)] // Adjust max length if needed
