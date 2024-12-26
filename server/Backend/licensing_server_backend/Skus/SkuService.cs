@@ -56,6 +56,49 @@ namespace Licensing.Skus
         }
 
         /// <summary>
+        /// Get all SKUs
+        /// </summary>
+        /// <returns></returns>
+        public async Task<ServiceResult<List<Sku>?>> GetSkusAsync(List<string> skuList)
+        {
+            try
+            {
+                if (skuList.Count > 1000)
+                {
+                    return new ServiceResult<List<Sku>?>()
+                    {
+                        Status = ResultStatusCode.BadRequest,
+                        ErrorMessage = new ErrorMessageStruct("The maximum number of SKUs that can be retrieved is 1000")
+                    };
+                }
+
+                var skus = await _dbContext.Skus
+                               .Where(s => skuList.Contains(s.SkuCode))
+                               .AsNoTracking().ToListAsync();
+
+                if (skus == null)
+                {
+                    return new ServiceResult<List<Sku>?>()
+                    {
+                        Status = ResultStatusCode.Success,
+                        Data = null
+                    };
+                }
+
+                return new ServiceResult<List<Sku>?>()
+                {
+                    Status = ResultStatusCode.Success,
+                    Data =  skus
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting skus: {ex}");
+                return ReturnException<List<Sku>?>(ex);
+            }
+        }
+
+        /// <summary>
         /// Get SKU by code
         /// </summary>
         /// <param name="code"></param>
@@ -114,8 +157,8 @@ namespace Licensing.Skus
                     return new ServiceResult<Sku>() { Status = ResultStatusCode.NotFound };
                 }
                 return new ServiceResult<Sku>() { Status = ResultStatusCode.Success, Data = sku };
-            } 
-            catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 return ReturnException<Sku>(ex);
             }

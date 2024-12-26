@@ -74,6 +74,10 @@ namespace Licensing.License
 
                 foreach (var license in licenses)
                 {
+                    if (license.License == null)
+                    {
+                        continue;
+                    }
                     license.Features = license.GetFeatures(license.License);
                 }
 
@@ -125,7 +129,11 @@ namespace Licensing.License
                     return new ServiceResult<LicenseDetailsEntity>() { Status = ResultStatusCode.NotFound };
                 }
 
-                license.Features = license.GetFeatures(license.License);
+                if (license.License != null)
+                {
+                    license.Features = license.GetFeatures(license.License);
+                }
+
                 return new ServiceResult<LicenseDetailsEntity>() { Status = ResultStatusCode.Success, Data = license };
             }
             catch (Exception ex)
@@ -176,6 +184,10 @@ namespace Licensing.License
 
                 foreach (var license in licenses)
                 {
+                    if (license.License == null)
+                    {
+                        continue;
+                    }
                     license.Features = license.GetFeatures(license.License);
                 }
 
@@ -199,6 +211,33 @@ namespace Licensing.License
                 {
                     Status = ResultStatusCode.BadRequest,
                     ErrorMessage = new ErrorMessageStruct("Invalid request body")
+                };
+            }
+
+            if (licenseRequest.Features == null || licenseRequest.Features.Count == 0)
+            {
+                return new ServiceResult<LicenseEntity>
+                {
+                    Status = ResultStatusCode.BadRequest,
+                    ErrorMessage = new ErrorMessageStruct("Features are required")
+                };
+            }
+
+            // Build the list of SKUs
+            licenseRequest.Features = licenseRequest.Features.GroupBy(x => x.Sku).Select(y => y.First()).ToList();
+            var skuList = licenseRequest.Features.Select(f => f.Sku).Distinct().ToList();
+
+            var skus = await _dbContext.Skus
+               .Where(s => skuList.Contains(s.SkuCode))
+               .AsNoTracking().ToListAsync();
+
+            // Found less SKUs than requested
+            if (skus == null || skus.Count < skuList.Count)
+            {
+                return new ServiceResult<LicenseEntity>
+                {
+                    Status = ResultStatusCode.BadRequest,
+                    ErrorMessage = new ErrorMessageStruct("Invalid features")
                 };
             }
 
@@ -262,23 +301,50 @@ namespace Licensing.License
                 };
             }
 
-            var addEntity = _dbContext.Licenses.Add(new LicenseEntity
-                            {
-                                Id = Guid.NewGuid().ToString(),
-                                Label = licenseRequest.Label,
-                                IssuedBy = licenseRequest.IssuedBy,
-                                License = newJwt,
-                                Description = licenseRequest.Description,
-                                CustomerId = licenseRequest.CustomerId,
-                            });
-
-            await _dbContext.SaveChangesAsync();
-
-            return new ServiceResult<LicenseEntity>
+            try
             {
-                Status = ResultStatusCode.Success,
-                Data = addEntity.Entity
-            };
+
+                var addEntity = _dbContext.Licenses.Add(new LicenseEntity
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Label = licenseRequest.Label,
+                    IssuedBy = licenseRequest.IssuedBy,
+                    License = newJwt,
+                    Description = licenseRequest.Description,
+                    CustomerId = licenseRequest.CustomerId,
+                });
+
+                await _dbContext.SaveChangesAsync();
+
+                return new ServiceResult<LicenseEntity>
+                {
+                    Status = ResultStatusCode.Success,
+                    Data = addEntity.Entity
+                };
+            }
+            catch (DbUpdateException dbEx)
+            {
+                if (dbEx.InnerException == null)
+                {
+                    return ReturnException<LicenseEntity>(dbEx, "Error adding license to database");
+                }
+
+                // Could check in more detail which constraint was violated
+                if (dbEx.InnerException.Message.Contains("foreign"))
+                {
+                    return new ServiceResult<LicenseEntity>
+                    {
+                        Status = ResultStatusCode.BadRequest,
+                        ErrorMessage = new ErrorMessageStruct("Foreign key exception, please check customer exists and/or other constraints")
+                    };
+                }
+                return ReturnException<LicenseEntity>(dbEx, "Error adding license to database");
+            }
+            catch (Exception ex)
+            {
+                return ReturnException<LicenseEntity>(ex, "Error adding license to database");
+            }
+
         }
 
         public async Task<(bool, string)> ValidateJwt(string jwtToken)

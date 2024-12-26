@@ -5,6 +5,8 @@ namespace Licensing.Skus
     public interface ISkuService
     {
         Task<ServiceResult<PaginatedResults>> GetSkusAsync(BasicQueryFilter filter);
+        Task<ServiceResult<List<Sku>?>> GetSkusAsync(List<string> skuList);
+
         Task<ServiceResult<Sku>> GetSkusByCodeAsync(string sku);
         Task<ServiceResult<Sku>> GetSkusByIdAsync(int id);
         Task<ServiceResult<Sku>> GetSkusByNameAsync(string name);

@@ -11,14 +11,14 @@ namespace Licensing.License
     public class LicenseDetailsEntity
     {
 
-        public string Id { get; set; }
+        public string? Id { get; set; }
         public DateTime CreatedAt { get;  set; }
         public DateTime UpdatedAt { get;  set; }
         public string? Label { get; set; }
-        public string IssuedBy { get; set; }
-        public string License { get; set; }
+        public string? IssuedBy { get; set; }
+        public string? License { get; set; }
         public string? Description { get; set; }
-        public LicenseCustomerEntity Customer { get; set; }
+        public LicenseCustomerEntity? Customer { get; set; }
 
         public LicenseDetailsEntity() { } 
 

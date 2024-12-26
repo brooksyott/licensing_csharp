@@ -22,11 +22,25 @@ namespace Licensing.Skus
 
         // GET: api/<SkuController>
         [HttpGet]
-        public async Task<IActionResult> GetSkus([FromQuery] BasicQueryFilter basicQueryFilter)
+        public async Task<IActionResult> GetSkus([FromBody] List<String>? skuList, [FromQuery] BasicQueryFilter basicQueryFilter)
         {
-            var result = await _skuService.GetSkusAsync(basicQueryFilter);
+            if( (skuList == null) || (skuList.Count == 0))
+            {
+                var basicResult = await _skuService.GetSkusAsync(basicQueryFilter);
+                return basicResult.ToActionResult();
+            }
+
+            var result = await _skuService.GetSkusAsync(skuList);
             return result.ToActionResult();
         }
+
+        // GET: api/<SkuController>
+        //[HttpGet]
+        //public async Task<IActionResult> GetSkusFromList([FromBody] List<String> skus)
+        //{
+        //    var result = await _skuService.GetSkusAsync(skus);
+        //    return result.ToActionResult();
+        //}
 
         // GET api/<SkuController>/5
         [HttpGet("id/{id}")]
