@@ -21,7 +21,7 @@ namespace Licensing.License
         [Required]
         [Column("label")]
         [StringLength(255)] // Adjust max length if needed
-        public required string Label { get; set; }
+        public required string? Label { get; set; }
 
         [Required]
         [Column("issued_by")]

@@ -79,7 +79,7 @@ namespace Licensing.Keys
             try
             {
                 var certInfo = await _dbContext.Keys.Where(x => x.Id == keyId).AsNoTracking().SingleOrDefaultAsync();
-                if (certInfo == null)
+                if ((certInfo == null) || (String.IsNullOrWhiteSpace(certInfo.PublicKey)))
                 {
                     return new ServiceResult<byte[]>() { Status = ResultStatusCode.NotFound };
                 }
@@ -91,12 +91,12 @@ namespace Licensing.Keys
             }
         }
 
-        public async Task<ServiceResult<byte[]>> DownloadPrivateKeyAsync(string keyId)
+        public async Task<ServiceResult<byte[]>> DownloadPrivateKeyAsync(string? keyId)
         {
             try
             {
                 var certInfo = await _dbContext.Keys.Where(x => x.Id == keyId).AsNoTracking().SingleOrDefaultAsync();
-                if (certInfo == null)
+                if ((certInfo == null) || (String.IsNullOrWhiteSpace(certInfo.PrivateKey)))
                 {
                     return new ServiceResult<byte[]>() { Status = ResultStatusCode.NotFound };
                 }

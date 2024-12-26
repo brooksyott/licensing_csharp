@@ -18,7 +18,7 @@ namespace Licensing.Keys
         Task<ServiceResult<KeyEntity>> GetByIdAsync(string keyId);
 
         Task<ServiceResult<byte[]>> DownloadPublicKeyAsync(string keyId);
-        Task<ServiceResult<byte[]>> DownloadPrivateKeyAsync(string keyId);
+        Task<ServiceResult<byte[]>> DownloadPrivateKeyAsync(string? keyId);
 
         Task<ServiceResult<KeyEntity>> UpdateKeyAsync(string keyId, KeyUpdateRequestBody requestBody);
 

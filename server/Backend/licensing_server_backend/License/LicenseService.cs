@@ -117,7 +117,11 @@ namespace Licensing.License
             if (key == null || key.Data == null || key.Status != Common.ResultStatusCode.Success)
             {
                 _logger.LogInformation("Failed to download private key for {keyId}", licenseRequest.KeyId);
-                return null;
+                return new ServiceResult<LicenseEntity>
+                {
+                    Status = ResultStatusCode.BadRequest,
+                    ErrorMessage = new ErrorMessageStruct($"Failed to download private key for {licenseRequest.KeyId}")
+                };
             }
 
             var rsa = PemUtils.LoadRsaPrivateKey(Encoding.UTF8.GetString(key.Data));
@@ -127,6 +131,14 @@ namespace Licensing.License
                 algorithm: SecurityAlgorithms.RsaSha256
             );
 
+            if (String.IsNullOrWhiteSpace(licenseRequest?.CustomerId) || String.IsNullOrWhiteSpace(licenseRequest?.IssuedBy))
+            {
+                return new ServiceResult<LicenseEntity>
+                {
+                    Status = ResultStatusCode.BadRequest,
+                    ErrorMessage = new ErrorMessageStruct("CustomerId is required")
+                };
+            }
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
@@ -141,6 +153,8 @@ namespace Licensing.License
                 Expires = DateTime.UtcNow.AddDays(7),
                 SigningCredentials = signingCredentials
             };
+
+
 
             var tokenHandler = new JwtSecurityTokenHandler();
             var newToken = tokenHandler.CreateToken(tokenDescriptor);
@@ -229,6 +243,7 @@ namespace Licensing.License
                 var featuresClaim = jwtSecurityToken.Claims.FirstOrDefault(c => c.Type == "features")?.Value;
                 if (featuresClaim == null)
                 {
+                    return (false, "No 'features' claim found in JWT.");
                 }
                 var features = JsonConvert.DeserializeObject<List<Feature>>(featuresClaim);
             }
