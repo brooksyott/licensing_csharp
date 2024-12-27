@@ -1,5 +1,6 @@
 ﻿using Licensing.Common;
 using Licensing.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
@@ -11,6 +12,7 @@ namespace Licensing.Skus
 {
     [Route("api/v1/sku")]
     [ApiController]
+    [Authorize(Roles = "basic")]
     public class SkuController : ControllerBase
     {
         private readonly ISkuService _skuService;

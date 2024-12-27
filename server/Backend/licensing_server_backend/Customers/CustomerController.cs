@@ -1,4 +1,5 @@
 ﻿using Licensing.Common;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,6 +9,7 @@ namespace Licensing.Customers
 {
     [Route("api/v1/customers")]
     [ApiController]
+    [Authorize(Roles = "basic, admin")] 
     public class CustomerController : ControllerBase
     {
         private readonly ICustomerService _customerService;

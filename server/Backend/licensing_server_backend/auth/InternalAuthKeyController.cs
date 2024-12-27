@@ -1,6 +1,7 @@
 ﻿using Licensing.Auth;
 using Licensing.Common;
 using Licensing.Customers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -9,6 +10,7 @@ namespace Licensing.auth
 {
     [Route("api/v1/internal/auth/keys")]
     [ApiController]
+    [Authorize(Roles = "admin")] // Only accessible to admin role
     public class InternalAuthKeyController : ControllerBase
     {
         private readonly IInternalAuthKeyService _authKeyService;

@@ -1,10 +1,12 @@
 using HealthChecks.UI.Client;
+using Licensing.auth;
 using Licensing.Auth;
 using Licensing.Customers;
 using Licensing.Data;
 using Licensing.Keys;
 using Licensing.License;
 using Licensing.Skus;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
@@ -96,6 +98,12 @@ public class Program
                 Description = "Simple framework to generate licenses"
             });
         });
+
+        // Add custom authentication with roles
+        services.AddAuthentication("ApiKeyScheme")
+            .AddScheme<AuthenticationSchemeOptions, ApiKeyAuthenticationHandler>("ApiKeyScheme", null);
+
+        services.AddAuthorization();
     }
 
     private static void InitializeApp(WebApplication app)
@@ -144,6 +152,9 @@ public class Program
             Predicate = _ => true,
             ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
         });
+
+        app.UseAuthentication(); // Ensures authentication is available
+        app.UseAuthorization(); // Handles authorization for endpoints
 
         app.MapControllers();
     }

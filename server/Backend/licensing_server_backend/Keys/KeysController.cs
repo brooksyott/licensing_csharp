@@ -1,5 +1,6 @@
 ﻿using Licensing.Common;
 using Licensing.Skus;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 
@@ -9,6 +10,7 @@ namespace Licensing.Keys
 {
     [Route("api/v1/keys")]
     [ApiController]
+    [Authorize(Roles = "basic")]
     public class KeysController : ControllerBase
     {
         private readonly ILogger<KeysController> _logger;
