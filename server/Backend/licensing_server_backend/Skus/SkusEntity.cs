@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace Licensing.Skus
 {
     [Table("skus", Schema = "public")]
-    public class Sku
+    public class SkuEntity
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]

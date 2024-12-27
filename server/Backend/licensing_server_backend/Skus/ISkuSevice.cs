@@ -5,18 +5,18 @@ namespace Licensing.Skus
     public interface ISkuService
     {
         Task<ServiceResult<PaginatedResults>> GetSkusAsync(BasicQueryFilter filter);
-        Task<ServiceResult<List<Sku>?>> GetSkusAsync(List<string> skuList);
+        Task<ServiceResult<List<SkuEntity>?>> GetSkusAsync(List<string> skuList);
 
-        Task<ServiceResult<Sku>> GetSkusByCodeAsync(string sku);
-        Task<ServiceResult<Sku>> GetSkusByIdAsync(int id);
-        Task<ServiceResult<Sku>> GetSkusByNameAsync(string name);
+        Task<ServiceResult<SkuEntity>> GetSkusByCodeAsync(string sku);
+        Task<ServiceResult<SkuEntity>> GetSkusByIdAsync(int id);
+        Task<ServiceResult<SkuEntity>> GetSkusByNameAsync(string name);
 
-        Task<ServiceResult<Sku>> AddSkuAsync(Sku sku);
+        Task<ServiceResult<SkuEntity>> AddSkuAsync(SkuEntity sku);
 
-        Task<ServiceResult<Sku>> UpdateSkuAsync(int id, SkuUpdate sku);
-        Task<ServiceResult<Sku>> UpdateSkuAsync(string skuCode, SkuUpdate sku);
+        Task<ServiceResult<SkuEntity>> UpdateSkuAsync(int id, SkuUpdate sku);
+        Task<ServiceResult<SkuEntity>> UpdateSkuAsync(string skuCode, SkuUpdate sku);
 
-        Task<ServiceResult<Sku>> DeleteSkuAsync(int id);
-        Task<ServiceResult<Sku>> DeleteSkuAsync(string skuCode);
+        Task<ServiceResult<SkuEntity>> DeleteSkuAsync(int id);
+        Task<ServiceResult<SkuEntity>> DeleteSkuAsync(string skuCode);
     }
 }

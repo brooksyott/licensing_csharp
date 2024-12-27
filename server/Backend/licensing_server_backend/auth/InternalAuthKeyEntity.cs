@@ -1,15 +1,21 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 
-namespace Licensing.Customers
+namespace Licensing.auth
 {
-    [Table("customers", Schema = "public")]
-    public class CustomerEntity
+
+    [Table("int_auth_keys", Schema = "public")]
+    public class InternalAuthKeyEntity
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [Column("id")]
         public string Id { get; set; } = Guid.NewGuid().ToString();
+
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Column("key")]
+        public string Key { get; set; } = Guid.NewGuid().ToString();
 
         [Column("created_at")]
         public DateTime CreatedAt { get; private set; }
@@ -19,16 +25,17 @@ namespace Licensing.Customers
         public DateTime UpdatedAt { get; private set; }
 
         [Required]
-        [Column("name")]
+        [Column("created_by")]
         [StringLength(255)] // Adjust max length if needed
-        public required string? Name { get; set; }
+        public required string? CreatedBy { get; set; }
+
+        [Required]
+        [Column("role")]
+        [StringLength(255)] // Adjust max length if needed
+        public required string? Role { get; set; }
 
         [Column("description")]
         [StringLength(20480)] // Adjust max length if needed
         public string? Description { get; set; }
-
-        [Column("is_visible")]
-        public bool Visibility { get; set; } = false;
-
     }
 }

@@ -68,7 +68,7 @@ namespace Licensing.Skus
 
         // POST api/<SkuController>
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] Sku value)
+        public async Task<IActionResult> Post([FromBody] SkuEntity value)
         {
             var result = await _skuService.AddSkuAsync(value);
             return result.ToActionResult();

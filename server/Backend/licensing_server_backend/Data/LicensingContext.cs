@@ -3,6 +3,7 @@ using Licensing.License;
 using Licensing.Skus;
 using Licensing.Customers;
 using Microsoft.EntityFrameworkCore;
+using Licensing.auth;
 
 namespace Licensing.Data
 {
@@ -12,10 +13,11 @@ namespace Licensing.Data
         {
         }
 
-        public DbSet<Sku> Skus { get; set; }
+        public DbSet<SkuEntity> Skus { get; set; }
         public DbSet<KeyEntity> Keys { get; set; }
         public DbSet<LicenseEntity> Licenses { get; set; }
         public DbSet<CustomerEntity> Customers { get; set; }
+        public DbSet<InternalAuthKeyEntity> InternalAuthKeys { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -24,6 +26,29 @@ namespace Licensing.Data
             OnModelCreatingCerts(modelBuilder);
             OnModelCreatingLicenses(modelBuilder);
             OnModelCreatingCustomers(modelBuilder);
+            OnModelCreatingInternalAuthKeys(modelBuilder);
+        }
+
+        protected void OnModelCreatingInternalAuthKeys(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<InternalAuthKeyEntity>(entity =>
+            {
+                entity.ToTable("int_auth_keys", "public");
+                entity.HasKey(e => e.Id);
+            });
+
+            modelBuilder.Entity<InternalAuthKeyEntity>(entity =>
+            {
+                entity.Property(e => e.CreatedAt)
+                      .HasColumnName("created_at")
+                      .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                      .ValueGeneratedOnAdd();
+
+                entity.Property(e => e.UpdatedAt)
+                      .HasColumnName("updated_at")
+                      .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                      .ValueGeneratedOnAddOrUpdate();
+            });
         }
 
         protected void OnModelCreatingCustomers(ModelBuilder modelBuilder)
@@ -94,7 +119,7 @@ namespace Licensing.Data
 
         protected void OnModelCreatingSkus(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Sku>(entity =>
+            modelBuilder.Entity<SkuEntity>(entity =>
             {
                 entity.ToTable("skus", "public");
                 entity.HasKey(e => e.Id);
@@ -103,15 +128,15 @@ namespace Licensing.Data
                       .ValueGeneratedOnAdd(); // Configures auto-increment
             });
 
-            modelBuilder.Entity<Sku>()
+            modelBuilder.Entity<SkuEntity>()
                 .HasIndex(s => s.SkuCode)
                 .IsUnique();
 
-            modelBuilder.Entity<Sku>()
+            modelBuilder.Entity<SkuEntity>()
                 .HasIndex(s => s.Name)
                 .IsUnique();
 
-            modelBuilder.Entity<Sku>(entity =>
+            modelBuilder.Entity<SkuEntity>(entity =>
             {
                 entity.Property(e => e.CreatedAt)
                       .HasColumnName("created_at")
