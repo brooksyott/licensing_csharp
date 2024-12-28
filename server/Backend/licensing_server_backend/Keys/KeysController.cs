@@ -10,7 +10,7 @@ namespace Licensing.Keys
 {
     [Route("api/v1/keys")]
     [ApiController]
-    [Authorize(Roles = "basic")]
+    [Authorize(Roles = "general, license-admin, admin")]
     public class KeysController : ControllerBase
     {
         private readonly ILogger<KeysController> _logger;
@@ -26,14 +26,27 @@ namespace Licensing.Keys
         [HttpGet]
         public async Task<ActionResult<KeyEntity>> Get(BasicQueryFilter queryFilter)
         {
-            var result = await _keyService.GetKeysAsync(queryFilter);
+            bool redact = true;
+
+            if (User.IsInRole("license-admin, admin"))
+            {
+                redact = false;
+            }
+
+            var result = await _keyService.GetKeysAsync(queryFilter, redact);
             return (ActionResult)result.ToActionResult();
         }
 
         [HttpGet("{keyId}")]
         public async Task<ActionResult<KeyEntity>> GetById(string keyId)
         {
-            var result = await _keyService.GetByIdAsync(keyId);
+            bool redact = true;
+            if (User.IsInRole("license-admin, admin"))
+            {
+                redact = false;
+            }
+
+            var result = await _keyService.GetByIdAsync(keyId, redact);
             return (ActionResult)result.ToActionResult();
         }
 
@@ -52,6 +65,7 @@ namespace Licensing.Keys
         }
 
         [HttpGet("{keyId}/download/private")]
+        [Authorize(Roles = "license-admin, admin")]
         public async Task<ActionResult<byte[]>> DownloadPrivateKey(string keyId)
         {
             var result = await _keyService.DownloadPrivateKeyAsync(keyId);
@@ -65,6 +79,7 @@ namespace Licensing.Keys
 
         // POST api/<LicenseController>
         [HttpPost]
+        [Authorize(Roles = "license-admin, admin")]
         public async Task<ActionResult<KeyEntity>> Post([FromBody] KeyGenerationRequestBody keyGenRequest)
         {
             var result = await _keyService.GenerateKeys(keyGenRequest);
@@ -76,12 +91,19 @@ namespace Licensing.Keys
         [HttpPatch("{keyId}")]
         public async Task<IActionResult> Put(string keyId, [FromBody] KeyUpdateRequestBody value)
         {
-            var result = await _keyService.UpdateKeyAsync(keyId, value);
+            bool redact = true;
+            if (User.IsInRole("license-admin, admin"))
+            {
+                redact = false;
+            }
+
+            var result = await _keyService.UpdateKeyAsync(keyId, value, redact);
             return result.ToActionResult();
         }
 
         // DELETE api/<LicenseController>/5
         [HttpDelete("{keyId}")]
+        [Authorize(Roles = "license-admin, admin")]
         public async Task<IActionResult> Delete(string keyId)
         {
             var result = await _keyService.DeleteKeyAsync(keyId);

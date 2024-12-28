@@ -6,6 +6,8 @@ namespace Licensing.Keys
     [Table("keys", Schema = "public")]
     public class KeyEntity
     {
+        public const string Redact = "****** REDACTED ******";
+
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [Column("id")]

@@ -17,17 +17,35 @@ using Microsoft.EntityFrameworkCore;
 namespace Licensing.License
 {
 
-    public class LicenseService : ILicenseService
+    public class LicenseService : BaseService<LicenseService>, ILicenseService
     {
-        private readonly ILogger<LicenseService> _logger;
         private readonly IKeyService _keyService;
-        private readonly LicensingContext _dbContext;
 
-        public LicenseService(ILogger<LicenseService> logger, IKeyService keyService, LicensingContext context)
+        public LicenseService(ILogger<LicenseService> logger, IKeyService keyService, LicensingContext context) : base(logger, context)
         {
-            _logger = logger;
             _keyService = keyService;
-            _dbContext = context;
+        }
+
+
+        public async Task<ServiceResult<LicenseEntity>> DeleteLicenseAsync(string licenseId)
+        {
+
+            try
+            {
+                var toDeleteLicense = await _dbContext.Licenses.Where(x => x.Id == licenseId).AsNoTracking().SingleOrDefaultAsync();
+                if (toDeleteLicense == null)
+                {
+                    return new ServiceResult<LicenseEntity>() { Status = ResultStatusCode.NotFound };
+                }
+                var returnedDeletedLicense = _dbContext.Licenses.Remove(toDeleteLicense);
+
+                await _dbContext.SaveChangesAsync();
+                return new ServiceResult<LicenseEntity>() { Status = ResultStatusCode.Success, Data = returnedDeletedLicense.Entity };
+            }
+            catch (Exception ex)
+            {
+                return ReturnException<LicenseEntity>(ex);
+            }
         }
 
         public async Task<ServiceResult<PaginatedResults>> GetByCustomerIdAsync(string customerId, BasicQueryFilter filter)
@@ -92,7 +110,6 @@ namespace Licensing.License
                 return ReturnException<PaginatedResults>(ex, "Error getting keys");
             }
         }
-
 
         public async Task<ServiceResult<LicenseDetailsEntity>> GetByIdAsync(string licenseId)
         {
@@ -460,19 +477,6 @@ namespace Licensing.License
             return System.Text.Encoding.UTF8.GetString(data);
         }
 
-        /// <summary>
-        /// Returns a service result based on the specified exception
-        /// </summary>
-        /// <param name="ex"></param>
-        private ServiceResult<T> ReturnException<T>(Exception ex, string logMessage = "")
-        {
-            if (String.IsNullOrWhiteSpace(logMessage))
-                _logger.LogError($"{logMessage}");
-            else
-                _logger.LogError($"{logMessage}: {ex.Message}");
-
-            return ExceptionHandler.ReturnException<T>(ex);
-        }
 
     }
 }

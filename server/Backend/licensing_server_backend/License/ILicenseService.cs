@@ -9,6 +9,8 @@ namespace Licensing.License
         Task<ServiceResult<PaginatedResults>> GetByCustomerIdAsync(string customerId, BasicQueryFilter filter);
         Task<ServiceResult<LicenseDetailsEntity>> GetByIdAsync(string licenseId);
 
+        Task<ServiceResult<LicenseEntity>> DeleteLicenseAsync(string licenseId);
+
         Task<ServiceResult<LicenseEntity>> GenerateLicenseAsync(GenerateLicenseRequestBody licenseRequest);
         Task<(bool, string)> ValidateJwt(string jwtToken);
     }

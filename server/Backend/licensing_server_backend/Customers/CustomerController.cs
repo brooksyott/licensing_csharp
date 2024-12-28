@@ -9,7 +9,7 @@ namespace Licensing.Customers
 {
     [Route("api/v1/customers")]
     [ApiController]
-    [Authorize(Roles = "basic, admin")] 
+    [Authorize(Roles = "general, license-admin, admin")] 
     public class CustomerController : ControllerBase
     {
         private readonly ICustomerService _customerService;

@@ -8,36 +8,36 @@ namespace Licensing.License
 {
     [Route("api/v1/licenses")]
     [ApiController]
-    [Authorize(Roles = "basic")]
+    [Authorize(Roles = "general, admin, license-admin")]
     public class LicenseController : ControllerBase
     {
         private readonly ILogger<LicenseController> _logger;
-        private readonly ILicenseService _tokenService;
+        private readonly ILicenseService _licenseService;
 
         public LicenseController(ILogger<LicenseController> logger, ILicenseService tokenService)
         {
             _logger = logger;
-            _tokenService = tokenService;
+            _licenseService = tokenService;
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> Get([FromQuery] BasicQueryFilter queryFilter, string id)
         {
-            var result = await _tokenService.GetByIdAsync(id);
+            var result = await _licenseService.GetByIdAsync(id);
             return (ActionResult)result.ToActionResult();
         }
 
         [HttpGet]
         public async Task<ActionResult<PaginatedResults>> Get([FromQuery] BasicQueryFilter queryFilter)
         {
-            var result = await _tokenService.GetLicensesAsync(queryFilter);
+            var result = await _licenseService.GetLicensesAsync(queryFilter);
             return (ActionResult)result.ToActionResult();
         }
 
         [HttpGet("customer/{customerId}")]
         public async Task<ActionResult<PaginatedResults>> GetByCustomerId([FromQuery] BasicQueryFilter queryFilter, string customerId)
         {
-            var result = await _tokenService.GetByCustomerIdAsync(customerId, queryFilter);
+            var result = await _licenseService.GetByCustomerIdAsync(customerId, queryFilter);
             return (ActionResult)result.ToActionResult();
         }
 
@@ -45,20 +45,16 @@ namespace Licensing.License
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] GenerateLicenseRequestBody licenseRequest)
         {
-            var licenseResult = await _tokenService.GenerateLicenseAsync(licenseRequest);
+            var licenseResult = await _licenseService.GenerateLicenseAsync(licenseRequest);
             return licenseResult.ToActionResult();
         }
 
-        // PUT api/<LicenseController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
-
         // DELETE api/<LicenseController>/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
+        [HttpDelete("{licenseId}")]
+        public async Task<IActionResult> Delete(string licenseId)
         {
+            var licenseResult = await _licenseService.DeleteLicenseAsync(licenseId);
+            return licenseResult.ToActionResult();
         }
     }
 }

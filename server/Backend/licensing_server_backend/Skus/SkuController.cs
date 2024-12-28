@@ -12,7 +12,7 @@ namespace Licensing.Skus
 {
     [Route("api/v1/sku")]
     [ApiController]
-    [Authorize(Roles = "basic")]
+    [Authorize(Roles = "general, license-admin, admin")]
     public class SkuController : ControllerBase
     {
         private readonly ISkuService _skuService;
@@ -35,14 +35,6 @@ namespace Licensing.Skus
             var result = await _skuService.GetSkusAsync(skuList);
             return result.ToActionResult();
         }
-
-        // GET: api/<SkuController>
-        //[HttpGet]
-        //public async Task<IActionResult> GetSkusFromList([FromBody] List<String> skus)
-        //{
-        //    var result = await _skuService.GetSkusAsync(skus);
-        //    return result.ToActionResult();
-        //}
 
         // GET api/<SkuController>/5
         [HttpGet("id/{id}")]
@@ -70,6 +62,7 @@ namespace Licensing.Skus
 
         // POST api/<SkuController>
         [HttpPost]
+        [Authorize(Roles = "license-admin, admin")]
         public async Task<IActionResult> Post([FromBody] SkuEntity value)
         {
             var result = await _skuService.AddSkuAsync(value);
@@ -79,6 +72,7 @@ namespace Licensing.Skus
         // PUT api/<SkuController>/5
         [HttpPut("id/{id}")]
         [HttpPatch("id/{id}")]
+        [Authorize(Roles = "license-admin, admin")]
         public async Task<IActionResult> Put(int id, [FromBody] SkuUpdate value)
         {
             var result = await _skuService.UpdateSkuAsync(id, value);
@@ -88,6 +82,7 @@ namespace Licensing.Skus
         // PUT api/<SkuController>/5
         [HttpPut("{skuCode}")]
         [HttpPatch("{skuCode}")]
+        [Authorize(Roles = "license-admin, admin")]
         public async Task<IActionResult> Put(string skuCode, [FromBody] SkuUpdate value)
         {
             var result = await _skuService.UpdateSkuAsync(skuCode, value);
@@ -96,6 +91,7 @@ namespace Licensing.Skus
 
         // DELETE api/<SkuController>/5
         [HttpDelete("id/{id}")]
+        [Authorize(Roles = "license-admin, admin")]
         public async Task<IActionResult> Delete(int id)
         {
             var result = await _skuService.DeleteSkuAsync(id);
@@ -104,6 +100,7 @@ namespace Licensing.Skus
 
         // DELETE api/<SkuController>/5
         [HttpDelete("{skuCode}")]
+        [Authorize(Roles = "license-admin, admin")]
         public async Task<IActionResult> Delete(string skuCode)
         {
             var result = await _skuService.DeleteSkuAsync(skuCode);

@@ -21,12 +21,12 @@ namespace Licensing.Keys
             _dbContext = context;
         }
 
-        public async Task<ServiceResult<PaginatedResults>> GetKeysAsync(BasicQueryFilter filter)
+        public async Task<ServiceResult<PaginatedResults>> GetKeysAsync(BasicQueryFilter filter, Boolean redact = true)
         {
             try
             {
-                var skus = await _dbContext.Keys.OrderBy(x => x.CreatedAt).Skip(filter.Offset).Take(filter.Limit).AsNoTracking().ToListAsync();
-                if (skus == null)
+                var keys = await _dbContext.Keys.OrderBy(x => x.CreatedAt).Skip(filter.Offset).Take(filter.Limit).AsNoTracking().ToListAsync();
+                if (keys == null)
                 {
                     return new ServiceResult<PaginatedResults>()
                     {
@@ -35,11 +35,20 @@ namespace Licensing.Keys
                     };
                 }
 
+                if (redact == true)
+                {
+                    foreach (var key in keys)
+                    {
+                        key.PrivateKey = KeyEntity.Redact;
+                    }
+                }
+
                 return new ServiceResult<PaginatedResults>()
                 {
                     Status = ResultStatusCode.Success,
-                    Data = new PaginatedResults() { Limit = filter.Limit, Offset = filter.Offset, Count = skus.Count, Results = skus }
+                    Data = new PaginatedResults() { Limit = filter.Limit, Offset = filter.Offset, Count = keys.Count, Results = keys }
                 };
+
             }
             catch (Exception ex)
             {
@@ -82,16 +91,22 @@ namespace Licensing.Keys
         }
 
 
-        public async Task<ServiceResult<KeyEntity>> GetByIdAsync(string keyId)
+        public async Task<ServiceResult<KeyEntity>> GetByIdAsync(string keyId, Boolean redact)
         {
             try
             {
-                var sku = await _dbContext.Keys.Where(x => x.Id == keyId).AsNoTracking().SingleOrDefaultAsync();
-                if (sku == null)
+                var key = await _dbContext.Keys.Where(x => x.Id == keyId).AsNoTracking().SingleOrDefaultAsync();
+                if (key == null)
                 {
                     return new ServiceResult<KeyEntity>() { Status = ResultStatusCode.NotFound };
                 }
-                return new ServiceResult<KeyEntity>() { Status = ResultStatusCode.Success, Data = sku };
+
+                if (redact == true)
+                {
+                    key.PrivateKey = KeyEntity.Redact;
+                }
+
+                return new ServiceResult<KeyEntity>() { Status = ResultStatusCode.Success, Data = key };
             }
             catch (Exception ex)
             {
@@ -152,7 +167,7 @@ namespace Licensing.Keys
             }
         }
 
-        public async Task<ServiceResult<KeyEntity>> UpdateKeyAsync(string keyId, KeyUpdateRequestBody requestBody)
+        public async Task<ServiceResult<KeyEntity>> UpdateKeyAsync(string keyId, KeyUpdateRequestBody requestBody, bool redact)
         {
             if (requestBody == null || !requestBody.IsValid())
             {
@@ -177,6 +192,12 @@ namespace Licensing.Keys
                 var returedUpdatedSku = _dbContext.Keys.Update(updatedKey);
 
                 await _dbContext.SaveChangesAsync();
+
+                if (redact == true)
+                {
+                    returedUpdatedSku.Entity.PrivateKey = KeyEntity.Redact;
+                }
+
                 return new ServiceResult<KeyEntity>() { Status = ResultStatusCode.Success, Data = returedUpdatedSku.Entity };
             }
             catch (Exception ex)
@@ -198,7 +219,7 @@ namespace Licensing.Keys
                 var returedDeletedSku = _dbContext.Keys.Remove(toDeleteKey);
 
                 await _dbContext.SaveChangesAsync();
-                return new ServiceResult<KeyEntity>() { Status = ResultStatusCode.Success, Data = returedDeletedSku.Entity };
+                return new ServiceResult<KeyEntity>() { Status = ResultStatusCode.Success, Data = null };
             }
             catch (Exception ex)
             {
