@@ -16,9 +16,7 @@ namespace Licensing.Data
         /// Initializes a new instance of the <see cref="LicensingContext"/> class.
         /// </summary>
         /// <param name="options">The options to be used by a <see cref="DbContext"/>.</param>
-        public LicensingContext(DbContextOptions<LicensingContext> options) : base(options)
-        {
-        }
+        public LicensingContext(DbContextOptions<LicensingContext> options) : base(options) { }
 
         /// <summary>
         /// Gets or sets the Skus.
