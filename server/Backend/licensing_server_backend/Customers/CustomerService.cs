@@ -111,27 +111,6 @@ namespace Licensing.Customers
             }
         }
 
-        /// <summary>
-        /// Method to create a new customer.
-        /// </summary>
-        /// <param name="customer">Customer entity to be created.</param>
-        /// <returns>Service result containing created customer data.</returns>
-        public async Task<ServiceResult<CustomerEntity>> CreateCustomerAsync(CustomerEntity customer)
-        {
-            try
-            {
-                // Add the new customer to the database
-                _dbContext.Customers.Add(customer);
-                await _dbContext.SaveChangesAsync();
-                // Return the created customer data
-                return new ServiceResult<CustomerEntity>() { Status = ResultStatusCode.Success, Data = customer };
-            }
-            catch (Exception ex)
-            {
-                // Handle exceptions and return an error result
-                return ReturnException<CustomerEntity>(ex, $"Error creating customer");
-            }
-        }
 
         /// <summary>
         /// Method to add a new customer (similar to CreateCustomerAsync).
@@ -224,7 +203,6 @@ namespace Licensing.Customers
             catch (Exception ex)
             {
                 return ReturnException<CustomerEntity>(ex, $"Error deleting customer");
-
             }
         }
     }

@@ -11,6 +11,10 @@ using Licensing.auth;
 
 namespace Licensing.Auth
 {
+    /// <summary>
+    /// Service for managing internal auth keys
+    /// These keys are used to protect the web api endpoints, and are mapped to specific roles
+    /// </summary>
     public class InternalAuthKeyService : BaseService<InternalAuthKeyService>, IInternalAuthKeyService
     {
         public InternalAuthKeyService(ILogger<InternalAuthKeyService> logger, LicensingContext context) : base(logger, context)

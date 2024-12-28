@@ -10,110 +10,23 @@ using Licensing.Skus;
 
 namespace Licensing.Keys
 {
-    public class KeyService : IKeyService
+    /// <summary>
+    /// Service for managing keys.
+    /// </summary>
+    public class KeyService : BaseService<KeyService>, IKeyService
     {
-        private readonly ILogger<KeyService> _logger;
-        private readonly LicensingContext _dbContext;
+        /// <summary>
+        /// Initializes a new instance of the <see cref="KeyService"/> class.
+        /// </summary>
+        /// <param name="logger">The logger instance.</param>
+        /// <param name="context">The database context.</param>
+        public KeyService(ILogger<KeyService> logger, LicensingContext context) : base(logger, context) { }
 
-        public KeyService(ILogger<KeyService> logger, LicensingContext context)
-        {
-            _logger = logger;
-            _dbContext = context;
-        }
-
-        public async Task<ServiceResult<PaginatedResults>> GetKeysAsync(BasicQueryFilter filter, Boolean redact = true)
-        {
-            try
-            {
-                var keys = await _dbContext.Keys.OrderBy(x => x.CreatedAt).Skip(filter.Offset).Take(filter.Limit).AsNoTracking().ToListAsync();
-                if (keys == null)
-                {
-                    return new ServiceResult<PaginatedResults>()
-                    {
-                        Status = ResultStatusCode.Success,
-                        Data = new PaginatedResults() { Limit = filter.Limit, Offset = filter.Offset, Results = new object[] { } }
-                    };
-                }
-
-                if (redact == true)
-                {
-                    foreach (var key in keys)
-                    {
-                        key.PrivateKey = KeyEntity.Redact;
-                    }
-                }
-
-                return new ServiceResult<PaginatedResults>()
-                {
-                    Status = ResultStatusCode.Success,
-                    Data = new PaginatedResults() { Limit = filter.Limit, Offset = filter.Offset, Count = keys.Count, Results = keys }
-                };
-
-            }
-            catch (Exception ex)
-            {
-                return ReturnException<PaginatedResults>(ex, $"Error getting keys");
-            }
-        }
-
-        public async Task<ServiceResult<byte[]>> DownloadPublicKeyAsync(string keyId)
-        {
-            try
-            {
-                var certInfo = await _dbContext.Keys.Where(x => x.Id == keyId).AsNoTracking().SingleOrDefaultAsync();
-                if ((certInfo == null) || (String.IsNullOrWhiteSpace(certInfo.PublicKey)))
-                {
-                    return new ServiceResult<byte[]>() { Status = ResultStatusCode.NotFound };
-                }
-                return new ServiceResult<byte[]>() { Status = ResultStatusCode.Success, Data = Encoding.UTF8.GetBytes(certInfo.PublicKey) };
-            }
-            catch (Exception ex)
-            {
-                return ReturnException<byte[]>(ex, $"Error getting certificate information by Id");
-            }
-        }
-
-        public async Task<ServiceResult<byte[]>> DownloadPrivateKeyAsync(string? keyId)
-        {
-            try
-            {
-                var certInfo = await _dbContext.Keys.Where(x => x.Id == keyId).AsNoTracking().SingleOrDefaultAsync();
-                if ((certInfo == null) || (String.IsNullOrWhiteSpace(certInfo.PrivateKey)))
-                {
-                    return new ServiceResult<byte[]>() { Status = ResultStatusCode.NotFound };
-                }
-                return new ServiceResult<byte[]>() { Status = ResultStatusCode.Success, Data = Encoding.UTF8.GetBytes(certInfo.PrivateKey) };
-            }
-            catch (Exception ex)
-            {
-                return ReturnException<byte[]>(ex, $"Error getting certificate information by Id");
-            }
-        }
-
-
-        public async Task<ServiceResult<KeyEntity>> GetByIdAsync(string keyId, Boolean redact)
-        {
-            try
-            {
-                var key = await _dbContext.Keys.Where(x => x.Id == keyId).AsNoTracking().SingleOrDefaultAsync();
-                if (key == null)
-                {
-                    return new ServiceResult<KeyEntity>() { Status = ResultStatusCode.NotFound };
-                }
-
-                if (redact == true)
-                {
-                    key.PrivateKey = KeyEntity.Redact;
-                }
-
-                return new ServiceResult<KeyEntity>() { Status = ResultStatusCode.Success, Data = key };
-            }
-            catch (Exception ex)
-            {
-                return ReturnException<KeyEntity>(ex, $"Error getting certificate information by Id");
-            }
-        }
-
+        /// <summary>
+        /// Generates a new key pair.
+        /// </summary>
+        /// <param name="keyGenRequest">The key generation request body.</param>
+        /// <returns>Service result containing the generated key entity.</returns>
         public async Task<ServiceResult<KeyEntity>> GenerateKeys(KeyGenerationRequestBody keyGenRequest)
         {
             if (keyGenRequest == null || !keyGenRequest.IsValid())
@@ -121,7 +34,7 @@ namespace Licensing.Keys
                 return new ServiceResult<KeyEntity>()
                 {
                     Status = ResultStatusCode.BadRequest,
-                    ErrorMessage = new ErrorMessageStruct("Invalid request body")
+                    ErrorMessage = new ErrorInformation("Invalid request body")
                 };
             }
 
@@ -167,6 +80,126 @@ namespace Licensing.Keys
             }
         }
 
+        /// <summary>
+        /// Fetches a paginated list of keys.
+        /// </summary>
+        /// <param name="filter">Pagination filter.</param>
+        /// <param name="redact">Indicates whether to redact the private keys.</param>
+        /// <returns>Service result containing paginated list of keys.</returns>
+        public async Task<ServiceResult<PaginatedResults>> GetKeysAsync(BasicQueryFilter filter, bool redact = true)
+        {
+            try
+            {
+                var keys = await _dbContext.Keys.OrderBy(x => x.CreatedAt).Skip(filter.Offset).Take(filter.Limit).AsNoTracking().ToListAsync();
+                if (keys == null)
+                {
+                    return new ServiceResult<PaginatedResults>()
+                    {
+                        Status = ResultStatusCode.Success,
+                        Data = new PaginatedResults() { Limit = filter.Limit, Offset = filter.Offset, Results = new object[] { } }
+                    };
+                }
+
+                if (redact)
+                {
+                    foreach (var key in keys)
+                    {
+                        key.PrivateKey = KeyEntity.Redact;
+                    }
+                }
+
+                return new ServiceResult<PaginatedResults>()
+                {
+                    Status = ResultStatusCode.Success,
+                    Data = new PaginatedResults() { Limit = filter.Limit, Offset = filter.Offset, Count = keys.Count, Results = keys }
+                };
+            }
+            catch (Exception ex)
+            {
+                return ReturnException<PaginatedResults>(ex, $"Error getting keys");
+            }
+        }
+
+        /// <summary>
+        /// Fetches a key by ID.
+        /// </summary>
+        /// <param name="keyId">The key ID.</param>
+        /// <param name="redact">Indicates whether to redact the private key.</param>
+        /// <returns>Service result containing the key.</returns>
+        public async Task<ServiceResult<KeyEntity>> GetByIdAsync(string keyId, bool redact)
+        {
+            try
+            {
+                var key = await _dbContext.Keys.Where(x => x.Id == keyId).AsNoTracking().SingleOrDefaultAsync();
+                if (key == null)
+                {
+                    return new ServiceResult<KeyEntity>() { Status = ResultStatusCode.NotFound };
+                }
+
+                if (redact)
+                {
+                    key.PrivateKey = KeyEntity.Redact;
+                }
+
+                return new ServiceResult<KeyEntity>() { Status = ResultStatusCode.Success, Data = key };
+            }
+            catch (Exception ex)
+            {
+                return ReturnException<KeyEntity>(ex, $"Error getting certificate information by Id");
+            }
+        }
+
+        /// <summary>
+        /// Downloads the public key by key ID.
+        /// </summary>
+        /// <param name="keyId">The key ID.</param>
+        /// <returns>Service result containing the public key as a byte array.</returns>
+        public async Task<ServiceResult<byte[]>> DownloadPublicKeyAsync(string keyId)
+        {
+            try
+            {
+                var certInfo = await _dbContext.Keys.Where(x => x.Id == keyId).AsNoTracking().SingleOrDefaultAsync();
+                if ((certInfo == null) || (string.IsNullOrWhiteSpace(certInfo.PublicKey)))
+                {
+                    return new ServiceResult<byte[]>() { Status = ResultStatusCode.NotFound };
+                }
+                return new ServiceResult<byte[]>() { Status = ResultStatusCode.Success, Data = Encoding.UTF8.GetBytes(certInfo.PublicKey) };
+            }
+            catch (Exception ex)
+            {
+                return ReturnException<byte[]>(ex, $"Error getting certificate information by Id");
+            }
+        }
+
+        /// <summary>
+        /// Downloads the private key by key ID.
+        /// </summary>
+        /// <param name="keyId">The key ID.</param>
+        /// <returns>Service result containing the private key as a byte array.</returns>
+        public async Task<ServiceResult<byte[]>> DownloadPrivateKeyAsync(string? keyId)
+        {
+            try
+            {
+                var certInfo = await _dbContext.Keys.Where(x => x.Id == keyId).AsNoTracking().SingleOrDefaultAsync();
+                if ((certInfo == null) || (string.IsNullOrWhiteSpace(certInfo.PrivateKey)))
+                {
+                    return new ServiceResult<byte[]>() { Status = ResultStatusCode.NotFound };
+                }
+                return new ServiceResult<byte[]>() { Status = ResultStatusCode.Success, Data = Encoding.UTF8.GetBytes(certInfo.PrivateKey) };
+            }
+            catch (Exception ex)
+            {
+                return ReturnException<byte[]>(ex, $"Error getting certificate information by Id");
+            }
+        }
+
+        /// <summary>
+        /// Updates an existing key.
+        /// </summary>
+        /// <param name="keyId">The key ID.</param>
+        /// <param name="requestBody">The key update request body.</param>
+        /// <param name="redact">Indicates whether to redact the private key.</param>
+        /// <returns>Service result containing the updated key entity.</returns>
         public async Task<ServiceResult<KeyEntity>> UpdateKeyAsync(string keyId, KeyUpdateRequestBody requestBody, bool redact)
         {
             if (requestBody == null || !requestBody.IsValid())
@@ -174,7 +207,7 @@ namespace Licensing.Keys
                 return new ServiceResult<KeyEntity>()
                 {
                     Status = ResultStatusCode.BadRequest,
-                    ErrorMessage = new ErrorMessageStruct("Invalid request body")
+                    ErrorMessage = new ErrorInformation("Invalid request body")
                 };
             }
 
@@ -193,7 +226,7 @@ namespace Licensing.Keys
 
                 await _dbContext.SaveChangesAsync();
 
-                if (redact == true)
+                if (redact)
                 {
                     returedUpdatedSku.Entity.PrivateKey = KeyEntity.Redact;
                 }
@@ -206,9 +239,13 @@ namespace Licensing.Keys
             }
         }
 
+        /// <summary>
+        /// Deletes a key by ID.
+        /// </summary>
+        /// <param name="keyId">The key ID.</param>
+        /// <returns>Service result containing the deleted key entity.</returns>
         public async Task<ServiceResult<KeyEntity>> DeleteKeyAsync(string keyId)
         {
-
             try
             {
                 var toDeleteKey = await _dbContext.Keys.Where(x => x.Id == keyId).AsNoTracking().SingleOrDefaultAsync();
@@ -226,20 +263,6 @@ namespace Licensing.Keys
                 return ReturnException<KeyEntity>(ex);
             }
         }
-
-
-        /// <summary>
-        /// Returns a service result based on the specified exception
-        /// </summary>
-        /// <param name="ex"></param>
-        private ServiceResult<T> ReturnException<T>(Exception ex, string logMessage = "")
-        {
-            if (String.IsNullOrWhiteSpace(logMessage))
-                _logger.LogError($"{logMessage}");
-            else
-                _logger.LogError($"{logMessage}: {ex.Message}");
-
-            return ExceptionHandler.ReturnException<T>(ex);
-        }
     }
 }
+

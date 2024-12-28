@@ -8,6 +8,11 @@ using Licensing.Customers;
 
 namespace Licensing.License
 {
+    /// <summary>
+    /// Represents a license details entity.
+    /// Additionally to what is stored in the database, it contains a list of features and a customer details.
+    /// The license/token does have this information, but it's more user and UI friendly to have it here as well.
+    /// </summary>
     public class LicenseDetailsEntity
     {
 
@@ -33,6 +38,11 @@ namespace Licensing.License
             Customer = new LicenseCustomerEntity();
         }
 
+        /// <summary>
+        /// Get the features from the license token.
+        /// </summary>
+        /// <param name="license"></param>
+        /// <returns></returns>
         public List<Feature>? GetFeatures(string license)
         {
             try
@@ -53,11 +63,5 @@ namespace Licensing.License
         }
 
         public List<Feature>? Features { get; set; }    
-    }
-
-    public class LicenseCustomerEntity
-    {
-        public string? Id { get; set; }
-        public string? Name { get; set; }
     }
 }

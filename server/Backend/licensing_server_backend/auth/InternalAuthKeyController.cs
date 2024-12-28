@@ -64,14 +64,15 @@ namespace Licensing.auth
             return result.ToActionResult();
         }
 
-        // DELETE api/<InternalAuthKeyController>/5
+        // DELETE api/v1/internal/auth/keys/<guid>
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteByName(string id)
+        public async Task<IActionResult> DeleteById(string id)
         {
             var result = await _authKeyService.DeleteByIdAsync(id);
             return result.ToActionResult();
         }
 
+        // DELETE api/v1/internal/auth/keys/key/<key-name>
         [HttpDelete("key/{key}")]
         public async Task<IActionResult> DeleteByAuthKey(string key)
         {

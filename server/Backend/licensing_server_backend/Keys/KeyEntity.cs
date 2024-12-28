@@ -6,6 +6,7 @@ namespace Licensing.Keys
     [Table("keys", Schema = "public")]
     public class KeyEntity
     {
+        // Used to redact sensitive information from the response, specifically the private key
         public const string Redact = "****** REDACTED ******";
 
         [Key]

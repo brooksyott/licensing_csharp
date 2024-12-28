@@ -1,5 +1,8 @@
 ﻿namespace Licensing.License
 {
+    /// <summary>
+    /// Request body for generating a license.
+    /// </summary>
     public class GenerateLicenseRequestBody
     {
         public bool IsValid()

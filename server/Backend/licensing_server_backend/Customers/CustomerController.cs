@@ -29,7 +29,7 @@ namespace Licensing.Customers
             return result.ToActionResult();
         }
 
-        // GET api/v1/customers/5
+        // GET api/v1/customers/<guid>
         [HttpGet("{id}")]
         public async Task<IActionResult> GetCustomerById(string id)
         {
@@ -37,6 +37,7 @@ namespace Licensing.Customers
             return result.ToActionResult();
         }
 
+        // GET api/v1/customers/name/<name>
         [HttpGet("name/{name}")]
         public async Task<IActionResult> GetCustomerByName(string name)
         {
@@ -52,7 +53,7 @@ namespace Licensing.Customers
             return result.ToActionResult();
         }
 
-        // PUT api/v1/customers/5
+        // PUT or PATCH api/v1/customers/<guid>
         [HttpPut("{id}")]
         [HttpPatch("{id}")]
         public async Task<IActionResult> Put(string id, [FromBody] UpdateCustomerRequestBody customerUpdate)
@@ -61,7 +62,7 @@ namespace Licensing.Customers
             return result.ToActionResult();
         }
 
-        // DELETE api/v1/customers/5
+        // DELETE api/v1/customers/<guid>
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteById(string id)
         {
@@ -69,7 +70,7 @@ namespace Licensing.Customers
             return result.ToActionResult();
         }
 
-        // DELETE api/v1/customers/5
+        // DELETE api/v1/customers/name/<name>
         [HttpDelete("name/{name}")]
         public async Task<IActionResult> DeleteByName(string name)
         {

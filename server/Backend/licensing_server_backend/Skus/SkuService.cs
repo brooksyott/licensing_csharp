@@ -68,7 +68,7 @@ namespace Licensing.Skus
                     return new ServiceResult<List<SkuEntity>?>()
                     {
                         Status = ResultStatusCode.BadRequest,
-                        ErrorMessage = new ErrorMessageStruct("The maximum number of SKUs that can be retrieved is 1000")
+                        ErrorMessage = new ErrorInformation("The maximum number of SKUs that can be retrieved is 1000")
                     };
                 }
 

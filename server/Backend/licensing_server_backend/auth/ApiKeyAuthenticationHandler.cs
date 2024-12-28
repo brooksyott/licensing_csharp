@@ -9,6 +9,8 @@ using System.Text.Encodings.Web;
 
 namespace Licensing.auth
 {
+    // TODO: Implement distributed caching for the auth keys
+    //       I have postgres available, so I can use the pgsql cache
     public class ApiKeyAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
     {
         private const string ApiKeyHeaderName = "X-API-KEY";

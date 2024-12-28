@@ -29,6 +29,5 @@ namespace Licensing.Customers
 
         [Column("is_visible")]
         public bool Visibility { get; set; } = false;
-
     }
 }

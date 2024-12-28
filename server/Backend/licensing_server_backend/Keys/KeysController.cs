@@ -22,12 +22,13 @@ namespace Licensing.Keys
             this._keyService = licenseService;
         }
 
-        // GET: api/<LicenseController>
+        // GET: api/v1/keys
         [HttpGet]
         public async Task<ActionResult<KeyEntity>> Get(BasicQueryFilter queryFilter)
         {
             bool redact = true;
 
+            // Used to redact sensitive information from the response, specifically the private key
             if (User.IsInRole("license-admin, admin"))
             {
                 redact = false;
@@ -37,10 +38,12 @@ namespace Licensing.Keys
             return (ActionResult)result.ToActionResult();
         }
 
+        // GET: api/v1/keys/{keyId}
         [HttpGet("{keyId}")]
         public async Task<ActionResult<KeyEntity>> GetById(string keyId)
         {
             bool redact = true;
+            // Used to redact sensitive information from the response, specifically the private key
             if (User.IsInRole("license-admin, admin"))
             {
                 redact = false;
@@ -51,7 +54,12 @@ namespace Licensing.Keys
         }
 
 
-        // GET api/<LicenseController>/5
+        /// <summary>
+        /// Downloads the public key for the specified keyId
+        /// </summary>
+        /// <param name="keyId"></param>
+        /// <returns></returns>
+        // GET api/v1/keys/{keyId}/download/public
         [HttpGet("{keyId}/download/public")]
         public async Task<ActionResult<byte[]>> DownloadPublicKey(string keyId)
         {
@@ -64,8 +72,14 @@ namespace Licensing.Keys
             return File(result.Data, "application/x-pem-file", "public_key.pem");
         }
 
+        /// <summary>
+        /// Downloads the private key for the specified keyId
+        /// </summary>
+        /// <param name="keyId"></param>
+        /// <returns></returns>
+        // GET api/v1/keys/{keyId}/download/public
         [HttpGet("{keyId}/download/private")]
-        [Authorize(Roles = "license-admin, admin")]
+        [Authorize(Roles = "license-admin, admin")] // Only allow admins to download private keys
         public async Task<ActionResult<byte[]>> DownloadPrivateKey(string keyId)
         {
             var result = await _keyService.DownloadPrivateKeyAsync(keyId);
@@ -77,21 +91,22 @@ namespace Licensing.Keys
             return File(result.Data, "application/x-pem-file", "private_key.pem");
         }
 
-        // POST api/<LicenseController>
+        // POST api/v1/keys
         [HttpPost]
-        [Authorize(Roles = "license-admin, admin")]
+        [Authorize(Roles = "license-admin, admin")] // Only allow admins to generate keys
         public async Task<ActionResult<KeyEntity>> Post([FromBody] KeyGenerationRequestBody keyGenRequest)
         {
             var result = await _keyService.GenerateKeys(keyGenRequest);
             return (ActionResult)result.ToActionResult();
         }
 
-        // PUT api/<LicenseController>/5
+        // PUT api/v1/keys/{keyId}
         [HttpPut("{keyId}")]
         [HttpPatch("{keyId}")]
         public async Task<IActionResult> Put(string keyId, [FromBody] KeyUpdateRequestBody value)
         {
             bool redact = true;
+            // Used to redact sensitive information from the response, specifically the private key
             if (User.IsInRole("license-admin, admin"))
             {
                 redact = false;
@@ -101,7 +116,7 @@ namespace Licensing.Keys
             return result.ToActionResult();
         }
 
-        // DELETE api/<LicenseController>/5
+        // DELETE api/v1/keys/{keyId}
         [HttpDelete("{keyId}")]
         [Authorize(Roles = "license-admin, admin")]
         public async Task<IActionResult> Delete(string keyId)

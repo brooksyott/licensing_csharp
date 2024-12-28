@@ -1,5 +1,8 @@
 ﻿namespace Licensing.Customers
 {
+    /// <summary>
+    /// Request body for updating a customer.
+    /// </summary>
     public class UpdateCustomerRequestBody
     {
         public string? Name { get; set; }

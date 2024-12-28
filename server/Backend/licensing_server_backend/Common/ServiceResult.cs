@@ -3,6 +3,9 @@ using System.Net;
 
 namespace Licensing.Common
 {
+    /// <summary>
+    /// Enum for Result Status Codes to provide a consistent response from services
+    /// </summary>
     public enum ResultStatusCode
     {
         Success = 200,       // OK
@@ -16,8 +19,16 @@ namespace Licensing.Common
         InternalServerError = 500 // Server Error
     }
 
+    /// <summary>
+    /// Extension methods for converting ResultStatusCode to HttpStatusCode
+    /// </summary>
     public static class HttpStatusExtensions
     {
+        /// <summary>
+        /// An abstraction to convert ResultStatusCode returned from a service to an HttpStatusCode for the response
+        /// </summary>
+        /// <param name="status"></param>
+        /// <returns></returns>
         public static HttpStatusCode EnumToStatusCode(ResultStatusCode status)
         {
             return status switch
@@ -34,13 +45,14 @@ namespace Licensing.Common
                 _ => HttpStatusCode.InternalServerError // Default to Internal Server Error for undefined cases
             };
         }
-
-
     }
 
-    public class ErrorMessageStruct
+    /// <summary>
+    /// Error Information class to provide a consistent error message format
+    /// </summary>
+    public class ErrorInformation
     {
-        public ErrorMessageStruct(string message)
+        public ErrorInformation(string message)
         {
             Message = message;
         }
@@ -48,15 +60,19 @@ namespace Licensing.Common
         public string Message { get; set; }
     }
 
+    /// <summary>
+    /// Generic class for providing consistent responses from services
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public class ServiceResult<T>
     {
 
-        public ErrorMessageStruct? ErrorMessage { get; set; }
+        public ErrorInformation? ErrorMessage { get; set; }
         public ResultStatusCode Status { get; set; }
         public T? Data { get; set; }
 
         public static ServiceResult<T> Success(T data) => new ServiceResult<T> { Status = ResultStatusCode.Success, Data = data };
-        public static ServiceResult<T> Failure(ResultStatusCode status, string errorMessage) => new ServiceResult<T> { Status = status, ErrorMessage = new ErrorMessageStruct(errorMessage) };
+        public static ServiceResult<T> Failure(ResultStatusCode status, string errorMessage) => new ServiceResult<T> { Status = status, ErrorMessage = new ErrorInformation(errorMessage) };
 
         public IActionResult ToActionResult()
         {

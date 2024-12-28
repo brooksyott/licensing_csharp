@@ -1,35 +1,106 @@
-﻿using Licensing.Keys;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
+﻿using Licensing.Common;
+using Licensing.Data;
+using Licensing.Keys;
+using Licensing.Skus;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json.Linq;
-using System.Drawing;
+using Newtonsoft.Json;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using System.Text;
-using System.Text.RegularExpressions;
-using static Licensing.License.LicenseService;
-using Licensing.Common;
-using Newtonsoft.Json;
-using Licensing.Data;
-using Microsoft.EntityFrameworkCore;
 
 namespace Licensing.License
 {
-
+    /// <summary>
+    /// Service for managing licenses.
+    /// </summary>
     public class LicenseService : BaseService<LicenseService>, ILicenseService
     {
         private readonly IKeyService _keyService;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="LicenseService"/> class.
+        /// </summary>
+        /// <param name="logger">The logger instance.</param>
+        /// <param name="keyService">The key service instance.</param>
+        /// <param name="context">The database context.</param>
         public LicenseService(ILogger<LicenseService> logger, IKeyService keyService, LicensingContext context) : base(logger, context)
         {
             _keyService = keyService;
         }
 
+        /// <summary>
+        /// Generates a new license.
+        /// </summary>
+        /// <param name="licenseRequest">The license generation request body.</param>
+        /// <returns>Service result containing the generated license entity.</returns>
+        public async Task<ServiceResult<LicenseEntity>> GenerateLicenseAsync(GenerateLicenseRequestBody licenseRequest)
+        {
+            if (licenseRequest == null || String.IsNullOrEmpty(licenseRequest.IssuedBy) || String.IsNullOrEmpty(licenseRequest.CustomerId))
+            {
+                return new ServiceResult<LicenseEntity>
+                {
+                    Status = ResultStatusCode.BadRequest,
+                    ErrorMessage = new ErrorInformation("Invalid request body")
+                };
+            }
 
+            if (licenseRequest.Features == null || licenseRequest.Features.Count == 0)
+            {
+                return new ServiceResult<LicenseEntity>
+                {
+                    Status = ResultStatusCode.BadRequest,
+                    ErrorMessage = new ErrorInformation("Features are required")
+                };
+            }
+
+            // Validate the skus being requested
+            (var skuRequest, var skus) = await ValidateSkuList(licenseRequest);
+            if (skuRequest.Status != ResultStatusCode.Success)
+            {
+                return skuRequest;
+            }
+
+            // Create the JWT
+            (var jwtRequest, var newJwt) = await BuildJWT(licenseRequest);
+            if (jwtRequest.Status != ResultStatusCode.Success)
+            {
+                return jwtRequest;
+            }
+
+            try
+            {
+                var addEntity = _dbContext.Licenses.Add(new LicenseEntity
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Label = licenseRequest.Label,
+                    IssuedBy = licenseRequest.IssuedBy,
+                    License = newJwt,
+                    Description = licenseRequest.Description,
+                    CustomerId = licenseRequest.CustomerId,
+                });
+
+                await _dbContext.SaveChangesAsync();
+
+                return new ServiceResult<LicenseEntity>
+                {
+                    Status = ResultStatusCode.Success,
+                    Data = addEntity.Entity
+                };
+            }
+            catch (Exception ex)
+            {
+                return ReturnException<LicenseEntity>(ex, "Error adding license to database");
+            }
+        }
+
+        /// <summary>
+        /// Deletes a license by ID.
+        /// </summary>
+        /// <param name="licenseId">The license ID.</param>
+        /// <returns>Service result containing the deleted license entity.</returns>
         public async Task<ServiceResult<LicenseEntity>> DeleteLicenseAsync(string licenseId)
         {
-
             try
             {
                 var toDeleteLicense = await _dbContext.Licenses.Where(x => x.Id == licenseId).AsNoTracking().SingleOrDefaultAsync();
@@ -48,11 +119,16 @@ namespace Licensing.License
             }
         }
 
+        /// <summary>
+        /// Fetches licenses by customer ID with pagination.
+        /// </summary>
+        /// <param name="customerId">The customer ID.</param>
+        /// <param name="filter">Pagination filter.</param>
+        /// <returns>Service result containing paginated list of licenses.</returns>
         public async Task<ServiceResult<PaginatedResults>> GetByCustomerIdAsync(string customerId, BasicQueryFilter filter)
         {
             try
             {
-                //var licenses = await _dbContext.Licenses.Where(x => x.CustomerId == customerId).OrderBy(x => x.CreatedAt).Skip(filter.Offset).Take(filter.Limit).AsNoTracking().ToListAsync();
                 List<LicenseDetailsEntity> licenses = await _dbContext.Licenses
                                     .Where(x => x.CustomerId == customerId)
                                     .GroupJoin(
@@ -79,8 +155,6 @@ namespace Licensing.License
                                         })
                                     .OrderBy(x => x.CreatedAt).Skip(filter.Offset).Take(filter.Limit).AsNoTracking().ToListAsync();
 
-
-                // var licenses = await _dbContext.Licenses.OrderBy(x => x.CreatedAt).Skip(filter.Offset).Take(filter.Limit).AsNoTracking().ToListAsync();
                 if (licenses == null)
                 {
                     return new ServiceResult<PaginatedResults>()
@@ -111,11 +185,15 @@ namespace Licensing.License
             }
         }
 
+        /// <summary>
+        /// Fetches a license by ID.
+        /// </summary>
+        /// <param name="licenseId">The license ID.</param>
+        /// <returns>Service result containing the license details entity.</returns>
         public async Task<ServiceResult<LicenseDetailsEntity>> GetByIdAsync(string licenseId)
         {
             try
             {
-                //var license = await _dbContext.Licenses.Where(x => x.Id == licenseId).AsNoTracking().SingleOrDefaultAsync();
                 var license = await _dbContext.Licenses
                     .Where(x => x.Id == licenseId)
                     .GroupJoin(
@@ -159,6 +237,11 @@ namespace Licensing.License
             }
         }
 
+        /// <summary>
+        /// Fetches a paginated list of licenses.
+        /// </summary>
+        /// <param name="filter">Pagination filter.</param>
+        /// <returns>Service result containing paginated list of licenses.</returns>
         public async Task<ServiceResult<PaginatedResults>> GetLicensesAsync(BasicQueryFilter filter)
         {
             try
@@ -188,8 +271,6 @@ namespace Licensing.License
                                         })
                                     .OrderBy(x => x.CreatedAt).Skip(filter.Offset).Take(filter.Limit).AsNoTracking().ToListAsync();
 
-
-                // var licenses = await _dbContext.Licenses.OrderBy(x => x.CreatedAt).Skip(filter.Offset).Take(filter.Limit).AsNoTracking().ToListAsync();
                 if (licenses == null)
                 {
                     return new ServiceResult<PaginatedResults>()
@@ -220,24 +301,20 @@ namespace Licensing.License
             }
         }
 
-        public async Task<ServiceResult<LicenseEntity>> GenerateLicenseAsync(GenerateLicenseRequestBody licenseRequest)
+        /// <summary>
+        /// Builds the list of SKUs from the license request.
+        /// </summary>
+        /// <param name="licenseRequest"></param>
+        /// <returns></returns>
+        private async Task<(ServiceResult<LicenseEntity>, List<SkuEntity>?)> ValidateSkuList(GenerateLicenseRequestBody licenseRequest)
         {
-            if ((licenseRequest == null) || (licenseRequest.IsValid() == false))
-            {
-                return new ServiceResult<LicenseEntity>
-                {
-                    Status = ResultStatusCode.BadRequest,
-                    ErrorMessage = new ErrorMessageStruct("Invalid request body")
-                };
-            }
-
             if (licenseRequest.Features == null || licenseRequest.Features.Count == 0)
             {
-                return new ServiceResult<LicenseEntity>
+                return (new ServiceResult<LicenseEntity>
                 {
                     Status = ResultStatusCode.BadRequest,
-                    ErrorMessage = new ErrorMessageStruct("Features are required")
-                };
+                    ErrorMessage = new ErrorInformation("Features are required")
+                }, null);
             }
 
             // Build the list of SKUs
@@ -251,26 +328,36 @@ namespace Licensing.License
             // Found less SKUs than requested
             if (skus == null || skus.Count < skuList.Count)
             {
-                return new ServiceResult<LicenseEntity>
+                return (new ServiceResult<LicenseEntity>
                 {
                     Status = ResultStatusCode.BadRequest,
-                    ErrorMessage = new ErrorMessageStruct("Invalid features")
-                };
+                    ErrorMessage = new ErrorInformation("Invalid features")
+                }, null);
             }
 
-            var featuresJson = JsonConvert.SerializeObject(licenseRequest.Features);
+            return (new ServiceResult<LicenseEntity>
+            {
+                Status = ResultStatusCode.Success
+            }, skus);
+        }
 
+        /// <summary>
+        /// Builds a JWT token for the license request.
+        /// </summary>
+        /// <param name="licenseRequest"></param>
+        /// <returns></returns>
+        private async Task<(ServiceResult<LicenseEntity>, string)> BuildJWT(GenerateLicenseRequestBody licenseRequest)
+        {
             var key = await _keyService.DownloadPrivateKeyAsync(licenseRequest.KeyId);
             if (key == null || key.Data == null || key.Status != Common.ResultStatusCode.Success)
             {
                 _logger.LogInformation("Failed to download private key for {keyId}", licenseRequest.KeyId);
-                return new ServiceResult<LicenseEntity>
+                return (new ServiceResult<LicenseEntity>
                 {
                     Status = ResultStatusCode.BadRequest,
-                    ErrorMessage = new ErrorMessageStruct($"Failed to download private key for {licenseRequest.KeyId}")
-                };
+                    ErrorMessage = new ErrorInformation($"Failed to download private key for {licenseRequest.KeyId}")
+                }, String.Empty);
             }
-
             var rsa = PemUtils.LoadRsaPrivateKey(Encoding.UTF8.GetString(key.Data));
 
             var signingCredentials = new SigningCredentials(
@@ -278,14 +365,16 @@ namespace Licensing.License
                 algorithm: SecurityAlgorithms.RsaSha256
             );
 
-            if (String.IsNullOrWhiteSpace(licenseRequest?.CustomerId) || String.IsNullOrWhiteSpace(licenseRequest?.IssuedBy))
+            if (string.IsNullOrWhiteSpace(licenseRequest?.CustomerId) || string.IsNullOrWhiteSpace(licenseRequest?.IssuedBy))
             {
-                return new ServiceResult<LicenseEntity>
+                return (new ServiceResult<LicenseEntity>
                 {
                     Status = ResultStatusCode.BadRequest,
-                    ErrorMessage = new ErrorMessageStruct("CustomerId is required")
-                };
+                    ErrorMessage = new ErrorInformation("CustomerId is required")
+                }, String.Empty);
             }
+
+            var featuresJson = JsonConvert.SerializeObject(licenseRequest.Features);
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
@@ -301,76 +390,39 @@ namespace Licensing.License
                 SigningCredentials = signingCredentials
             };
 
-
-
             var tokenHandler = new JwtSecurityTokenHandler();
             var newToken = tokenHandler.CreateToken(tokenDescriptor);
             var newJwt = tokenHandler.WriteToken(newToken);
-            _logger.LogInformation($"Token created for {licenseRequest.CustomerId} using key {licenseRequest.KeyId} by {licenseRequest.IssuedBy}");
+
 
             (bool rc, string message) = await ValidateJwt(newJwt);
             if (rc == false)
             {
-                return new ServiceResult<LicenseEntity>
+                return (new ServiceResult<LicenseEntity>
                 {
                     Status = ResultStatusCode.InternalServerError,
-                    ErrorMessage = new ErrorMessageStruct(message)
-                };
+                    ErrorMessage = new ErrorInformation(message)
+                }, string.Empty);
             }
 
-            try
+            return (new ServiceResult<LicenseEntity>
             {
-
-                var addEntity = _dbContext.Licenses.Add(new LicenseEntity
-                {
-                    Id = Guid.NewGuid().ToString(),
-                    Label = licenseRequest.Label,
-                    IssuedBy = licenseRequest.IssuedBy,
-                    License = newJwt,
-                    Description = licenseRequest.Description,
-                    CustomerId = licenseRequest.CustomerId,
-                });
-
-                await _dbContext.SaveChangesAsync();
-
-                return new ServiceResult<LicenseEntity>
-                {
-                    Status = ResultStatusCode.Success,
-                    Data = addEntity.Entity
-                };
-            }
-            catch (DbUpdateException dbEx)
-            {
-                if (dbEx.InnerException == null)
-                {
-                    return ReturnException<LicenseEntity>(dbEx, "Error adding license to database");
-                }
-
-                // Could check in more detail which constraint was violated
-                if (dbEx.InnerException.Message.Contains("foreign"))
-                {
-                    return new ServiceResult<LicenseEntity>
-                    {
-                        Status = ResultStatusCode.BadRequest,
-                        ErrorMessage = new ErrorMessageStruct("Foreign key exception, please check customer exists and/or other constraints")
-                    };
-                }
-                return ReturnException<LicenseEntity>(dbEx, "Error adding license to database");
-            }
-            catch (Exception ex)
-            {
-                return ReturnException<LicenseEntity>(ex, "Error adding license to database");
-            }
-
+                Status = ResultStatusCode.Success
+            }, newJwt);
         }
 
-        public async Task<(bool, string)> ValidateJwt(string jwtToken)
+        /// <summary>
+        /// Validates a JWT token.
+        /// </summary>
+        /// <param name="jwtToken">The JWT token.</param>
+        /// <returns>A tuple containing a boolean indicating success and a message.</returns>
+        private async Task<(bool, string)> ValidateJwt(string jwtToken)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var jwtSecurityToken = tokenHandler.ReadJwtToken(jwtToken);
             object? kidValue;
 
-            // 2) Retrieve the header, e.g., "kid"
+            // Retrieve the header, e.g., "kid"
             if (jwtSecurityToken.Header.TryGetValue("kid", out kidValue))
             {
                 Console.WriteLine($"Header 'kid': {kidValue}");
@@ -384,13 +436,12 @@ namespace Licensing.License
             }
 
             string? kid = kidValue.ToString();
-            if (String.IsNullOrEmpty(kid))
+            if (string.IsNullOrEmpty(kid))
             {
                 string errorMessage = "No 'kid' found in JWT header.";
                 _logger.LogInformation(errorMessage);
                 return (false, errorMessage);
             }
-
 
             var getKeyResult = await _keyService.DownloadPublicKeyAsync(kid);
             if (getKeyResult == null || getKeyResult.Data == null || getKeyResult.Status != Common.ResultStatusCode.Success)
@@ -428,55 +479,6 @@ namespace Licensing.License
 
             return (true, "Ok");
         }
-
-        public static string DecodeJwtToString(string jwt)
-        {
-            // 1) Split the token by '.'
-            //    A JWT should have 3 parts: header, payload, signature
-            var parts = jwt.Split('.');
-            if (parts.Length < 2)
-            {
-                throw new ArgumentException("Invalid JWT format. Expected at least 2 parts (header, payload).");
-            }
-
-            // 2) Decode the header (parts[0]) and payload (parts[1]) from Base64URL
-            string headerJson = Base64UrlDecodeToString(parts[0]);
-            string payloadJson = Base64UrlDecodeToString(parts[1]);
-
-            // 3) Create a human-readable output
-            //    You can also return a custom object or two separate strings, if desired
-            return
-                headerJson +
-                payloadJson;
-        }
-
-        /// <summary>
-        /// Decodes a Base64Url-encoded string into a UTF8 string.
-        /// Base64Url replaces '+' with '-', '/' with '_', and omits padding.
-        /// </summary>
-        private static string Base64UrlDecodeToString(string base64Url)
-        {
-            // 1) Convert from base64url to normal base64
-            int mod4 = base64Url.Length % 4;
-            if (mod4 == 2)
-            {
-                base64Url += "==";
-            }
-            else if (mod4 == 3)
-            {
-                base64Url += "=";
-            }
-
-            // 2) Convert Base64Url to standard Base64
-            base64Url = base64Url.Replace('-', '+').Replace('_', '/');
-
-            // 3) Decode to bytes
-            byte[] data = Convert.FromBase64String(base64Url);
-
-            // 4) Convert to UTF-8 text
-            return System.Text.Encoding.UTF8.GetString(data);
-        }
-
-
     }
 }
+

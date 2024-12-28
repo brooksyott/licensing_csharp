@@ -20,13 +20,8 @@ namespace Licensing.License
             _licenseService = tokenService;
         }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> Get([FromQuery] BasicQueryFilter queryFilter, string id)
-        {
-            var result = await _licenseService.GetByIdAsync(id);
-            return (ActionResult)result.ToActionResult();
-        }
 
+        // GET: api/v1/licenses
         [HttpGet]
         public async Task<ActionResult<PaginatedResults>> Get([FromQuery] BasicQueryFilter queryFilter)
         {
@@ -34,6 +29,16 @@ namespace Licensing.License
             return (ActionResult)result.ToActionResult();
         }
 
+        // GET: api/v1/licenses/{id}
+        [HttpGet("{id}")]
+        public async Task<IActionResult> Get([FromQuery] BasicQueryFilter queryFilter, string id)
+        {
+            var result = await _licenseService.GetByIdAsync(id);
+            return (ActionResult)result.ToActionResult();
+        }
+
+
+        // GET: api/v1/licenses/customer/{customerId}
         [HttpGet("customer/{customerId}")]
         public async Task<ActionResult<PaginatedResults>> GetByCustomerId([FromQuery] BasicQueryFilter queryFilter, string customerId)
         {
@@ -41,7 +46,7 @@ namespace Licensing.License
             return (ActionResult)result.ToActionResult();
         }
 
-        // POST api/<LicenseController>
+        // POST: api/v1/licenses
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] GenerateLicenseRequestBody licenseRequest)
         {
@@ -49,7 +54,7 @@ namespace Licensing.License
             return licenseResult.ToActionResult();
         }
 
-        // DELETE api/<LicenseController>/5
+        // DELETE: api/v1/licenses/{licenseId}
         [HttpDelete("{licenseId}")]
         public async Task<IActionResult> Delete(string licenseId)
         {

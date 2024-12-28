@@ -4,6 +4,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Licensing.Common
 {
+    /// <summary>
+    /// Base service class for common service functionality
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public class BaseService<T> where T : class
     {
         protected readonly ILogger<T> _logger;

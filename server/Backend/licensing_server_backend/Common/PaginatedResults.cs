@@ -1,5 +1,8 @@
 ﻿namespace Licensing.Common
 {
+    /// <summary>
+    /// Used to return paginated results from the API.
+    /// </summary>
     public class PaginatedResults
     {
         public int Offset { get; set; } = 0;
