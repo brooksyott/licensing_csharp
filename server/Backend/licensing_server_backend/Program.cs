@@ -159,6 +159,12 @@ public class Program
         app.MapControllers();
     }
 
+    /// <summary>
+    /// Writes a custom health check response to the HTTP response.
+    /// </summary>
+    /// <param name="httpContext"></param>
+    /// <param name="report"></param>
+    /// <returns></returns>
     private static Task WriteCustomHealthCheckResponse(HttpContext httpContext, HealthReport report)
     {
         httpContext.Response.ContentType = "application/json";
