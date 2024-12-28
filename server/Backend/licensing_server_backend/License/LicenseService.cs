@@ -245,7 +245,7 @@ namespace Licensing.License
             var skuList = licenseRequest.Features.Select(f => f.Sku).Distinct().ToList();
 
             var skus = await _dbContext.Skus
-               .Where(s => skuList.Contains(s.SkuCode))
+               .Where(s => skuList.Contains(s.Id))
                .AsNoTracking().ToListAsync();
 
             // Found less SKUs than requested

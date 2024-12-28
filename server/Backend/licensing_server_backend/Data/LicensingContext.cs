@@ -123,14 +123,7 @@ namespace Licensing.Data
             {
                 entity.ToTable("skus", "public");
                 entity.HasKey(e => e.Id);
-
-                entity.Property(e => e.Id)
-                      .ValueGeneratedOnAdd(); // Configures auto-increment
             });
-
-            modelBuilder.Entity<SkuEntity>()
-                .HasIndex(s => s.SkuCode)
-                .IsUnique();
 
             modelBuilder.Entity<SkuEntity>()
                 .HasIndex(s => s.Name)

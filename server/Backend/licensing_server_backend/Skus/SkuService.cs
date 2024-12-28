@@ -73,7 +73,7 @@ namespace Licensing.Skus
                 }
 
                 var skus = await _dbContext.Skus
-                               .Where(s => skuList.Contains(s.SkuCode))
+                               .Where(s => skuList.Contains(s.Id))
                                .AsNoTracking().ToListAsync();
 
                 if (skus == null)
@@ -107,7 +107,7 @@ namespace Licensing.Skus
         {
             try
             {
-                var sku = await _dbContext.Skus.Where(x => x.SkuCode == code).AsNoTracking().SingleOrDefaultAsync();
+                var sku = await _dbContext.Skus.Where(x => x.Id == code).AsNoTracking().SingleOrDefaultAsync();
                 if (sku == null)
                 {
                     return new ServiceResult<SkuEntity>() { Status = ResultStatusCode.NotFound };
@@ -142,27 +142,6 @@ namespace Licensing.Skus
             }
         }
 
-        /// <summary>
-        /// Get SKU by ID
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        public async Task<ServiceResult<SkuEntity>> GetSkusByIdAsync(int id)
-        {
-            try
-            {
-                var sku = await _dbContext.Skus.Where(x => x.Id == id).AsNoTracking().SingleOrDefaultAsync();
-                if (sku == null)
-                {
-                    return new ServiceResult<SkuEntity>() { Status = ResultStatusCode.NotFound };
-                }
-                return new ServiceResult<SkuEntity>() { Status = ResultStatusCode.Success, Data = sku };
-            }
-            catch (Exception ex)
-            {
-                return ReturnException<SkuEntity>(ex);
-            }
-        }
 
         /// <summary>
         /// Add a new SKU
@@ -189,41 +168,12 @@ namespace Licensing.Skus
         /// </summary>
         /// <param name="sku"></param>"
         /// <returns>Bool</returns>
-        public async Task<ServiceResult<SkuEntity>> UpdateSkuAsync(int id, SkuUpdate sku)
-        {
-
-            try
-            {
-                var updatedSku = await _dbContext.Skus.Where(x => x.Id == id).AsNoTracking().SingleOrDefaultAsync();
-                if (updatedSku == null)
-                {
-                    return new ServiceResult<SkuEntity>() { Status = ResultStatusCode.NotFound };
-                }
-
-                updatedSku.Name = sku.Name;
-                updatedSku.Description = sku.Description;
-                var returedUpdatedSku = _dbContext.Skus.Update(updatedSku);
-
-                await _dbContext.SaveChangesAsync();
-                return new ServiceResult<SkuEntity>() { Status = ResultStatusCode.Success, Data = returedUpdatedSku.Entity };
-            }
-            catch (Exception ex)
-            {
-                return ReturnException<SkuEntity>(ex);
-            }
-        }
-
-        /// <summary>
-        /// Update a sku
-        /// </summary>
-        /// <param name="sku"></param>"
-        /// <returns>Bool</returns>
         public async Task<ServiceResult<SkuEntity>> UpdateSkuAsync(string skuCode, SkuUpdate sku)
         {
 
             try
             {
-                var updatedSku = await _dbContext.Skus.Where(x => x.SkuCode == skuCode).AsNoTracking().SingleOrDefaultAsync();
+                var updatedSku = await _dbContext.Skus.Where(x => x.Id == skuCode).AsNoTracking().SingleOrDefaultAsync();
                 if (updatedSku == null)
                 {
                     return new ServiceResult<SkuEntity>() { Status = ResultStatusCode.NotFound };
@@ -252,7 +202,7 @@ namespace Licensing.Skus
 
             try
             {
-                var toDeleteSku = await _dbContext.Skus.Where(x => x.SkuCode == skuCode).AsNoTracking().SingleOrDefaultAsync();
+                var toDeleteSku = await _dbContext.Skus.Where(x => x.Id == skuCode).AsNoTracking().SingleOrDefaultAsync();
                 if (toDeleteSku == null)
                 {
                     return new ServiceResult<SkuEntity>() { Status = ResultStatusCode.NotFound };
@@ -268,26 +218,6 @@ namespace Licensing.Skus
             }
         }
 
-        public async Task<ServiceResult<SkuEntity>> DeleteSkuAsync(int id)
-        {
-
-            try
-            {
-                var toDeleteSku = await _dbContext.Skus.Where(x => x.Id == id).AsNoTracking().SingleOrDefaultAsync();
-                if (toDeleteSku == null)
-                {
-                    return new ServiceResult<SkuEntity>() { Status = ResultStatusCode.NotFound };
-                }
-                var returedDeletedSku = _dbContext.Skus.Remove(toDeleteSku);
-
-                await _dbContext.SaveChangesAsync();
-                return new ServiceResult<SkuEntity>() { Status = ResultStatusCode.Success, Data = returedDeletedSku.Entity };
-            }
-            catch (Exception ex)
-            {
-                return ReturnException<SkuEntity>(ex);
-            }
-        }
 
         /// <summary>
         /// Returns a service result based on the specified exception

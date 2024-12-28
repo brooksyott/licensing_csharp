@@ -36,14 +36,6 @@ namespace Licensing.Skus
             return result.ToActionResult();
         }
 
-        // GET api/<SkuController>/5
-        [HttpGet("id/{id}")]
-        public async Task<IActionResult> GetSkuById(int id)
-        {
-            var result = await _skuService.GetSkusByIdAsync(id);
-            return result.ToActionResult();
-
-        }
 
         [HttpGet("name/{name}")]
         public async Task<IActionResult> GetSkuByName(string name)
@@ -69,15 +61,6 @@ namespace Licensing.Skus
             return result.ToActionResult();
         }
 
-        // PUT api/<SkuController>/5
-        [HttpPut("id/{id}")]
-        [HttpPatch("id/{id}")]
-        [Authorize(Roles = "license-admin, admin")]
-        public async Task<IActionResult> Put(int id, [FromBody] SkuUpdate value)
-        {
-            var result = await _skuService.UpdateSkuAsync(id, value);
-            return result.ToActionResult();
-        }
 
         // PUT api/<SkuController>/5
         [HttpPut("{skuCode}")]
@@ -89,14 +72,6 @@ namespace Licensing.Skus
             return result.ToActionResult();
         }
 
-        // DELETE api/<SkuController>/5
-        [HttpDelete("id/{id}")]
-        [Authorize(Roles = "license-admin, admin")]
-        public async Task<IActionResult> Delete(int id)
-        {
-            var result = await _skuService.DeleteSkuAsync(id);
-            return result.ToActionResult();
-        }
 
         // DELETE api/<SkuController>/5
         [HttpDelete("{skuCode}")]

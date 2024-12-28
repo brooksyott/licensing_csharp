@@ -8,15 +8,12 @@ namespace Licensing.Skus
         Task<ServiceResult<List<SkuEntity>?>> GetSkusAsync(List<string> skuList);
 
         Task<ServiceResult<SkuEntity>> GetSkusByCodeAsync(string sku);
-        Task<ServiceResult<SkuEntity>> GetSkusByIdAsync(int id);
         Task<ServiceResult<SkuEntity>> GetSkusByNameAsync(string name);
 
         Task<ServiceResult<SkuEntity>> AddSkuAsync(SkuEntity sku);
 
-        Task<ServiceResult<SkuEntity>> UpdateSkuAsync(int id, SkuUpdate sku);
         Task<ServiceResult<SkuEntity>> UpdateSkuAsync(string skuCode, SkuUpdate sku);
 
-        Task<ServiceResult<SkuEntity>> DeleteSkuAsync(int id);
         Task<ServiceResult<SkuEntity>> DeleteSkuAsync(string skuCode);
     }
 }
