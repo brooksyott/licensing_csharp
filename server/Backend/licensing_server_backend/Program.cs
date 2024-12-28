@@ -1,11 +1,20 @@
 using HealthChecks.UI.Client;
+using Licensing.auth;
+using Licensing.Auth;
+using Licensing.Customers;
 using Licensing.Data;
+using Licensing.Keys;
+using Licensing.License;
 using Licensing.Skus;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Logging;
+using Serilog;
+using Serilog.Core;
 using System.ComponentModel;
 using System.Data.Common;
 
@@ -17,11 +26,22 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
+        builder.Logging.ClearProviders();
+
+        Log.Logger = new LoggerConfiguration()
+            .ReadFrom.Configuration(builder.Configuration) // Reads configuration from appsettings.json
+            .Enrich.FromLogContext()
+            //.WriteTo.Console() // Write logs to console
+            .CreateLogger();
+
         builder.Configuration
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
             .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
             .AddEnvironmentVariables();
+
+
+        builder.Host.UseSerilog(); // Replace the default logger
 
         _connectionString = builder.Configuration.GetConnectionString("PostgresConnection");
 
@@ -46,6 +66,7 @@ public class Program
             options.UseNpgsql(_connectionString);
         });
 
+
         // Register custom health checks
         services.AddSingleton<StartupHealthCheck>(); // Singleton for stateful checks
         services.AddHealthChecks()
@@ -57,9 +78,14 @@ public class Program
                     tags: new[] { "db", "postgres" });
 
         services.AddSingleton(sp => new PostgresHealthCheck(_connectionString)); // Pass the connection string
-        services.AddScoped<ISkuService, SkuService>();
 
         services.AddControllers(); // Add support for controllers
+        services.AddScoped<ISkuService, SkuService>();
+        services.AddScoped<IKeyService, KeyService>();
+        services.AddScoped<ILicenseService, LicenseService>();
+        services.AddScoped<ICustomerService, CustomerService>();
+        services.AddScoped<IInternalAuthKeyService, InternalAuthKeyService>();
+
 
         // Add Swagger services
         services.AddEndpointsApiExplorer();
@@ -72,6 +98,12 @@ public class Program
                 Description = "Simple framework to generate licenses"
             });
         });
+
+        // Add custom authentication with roles
+        services.AddAuthentication("ApiKeyScheme")
+            .AddScheme<AuthenticationSchemeOptions, ApiKeyAuthenticationHandler>("ApiKeyScheme", null);
+
+        services.AddAuthorization();
     }
 
     private static void InitializeApp(WebApplication app)
@@ -120,6 +152,9 @@ public class Program
             Predicate = _ => true,
             ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
         });
+
+        app.UseAuthentication(); // Ensures authentication is available
+        app.UseAuthorization(); // Handles authorization for endpoints
 
         app.MapControllers();
     }

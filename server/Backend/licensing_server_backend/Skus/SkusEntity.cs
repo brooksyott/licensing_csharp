@@ -5,12 +5,13 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace Licensing.Skus
 {
     [Table("skus", Schema = "public")]
-    public class Sku
+    public class SkuEntity
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [Column("id")]
-        public int Id { get; set; } = -1;
+        [StringLength(255)]
+        public required string Id { get; set; }
 
         [Column("created_at")]
         public DateTime CreatedAt { get; private set; }
@@ -18,11 +19,6 @@ namespace Licensing.Skus
         [Column("updated_at")]
         [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
         public DateTime UpdatedAt { get; private set; }
-
-        [Required]
-        [Column("sku")]
-        [StringLength(255)] // Adjust max length if needed
-        public required string SkuCode { get; set; }
 
         [Required]
         [Column("name")]

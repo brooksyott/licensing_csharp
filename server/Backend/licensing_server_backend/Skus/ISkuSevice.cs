@@ -4,17 +4,20 @@ namespace Licensing.Skus
 {
     public interface ISkuService
     {
+        // Create
+        Task<ServiceResult<SkuEntity>> AddSkuAsync(SkuEntity sku);
+
+        // Read
         Task<ServiceResult<PaginatedResults>> GetSkusAsync(BasicQueryFilter filter);
-        Task<ServiceResult<Sku>> GetSkusByCodeAsync(string sku);
-        Task<ServiceResult<Sku>> GetSkusByIdAsync(int id);
-        Task<ServiceResult<Sku>> GetSkusByNameAsync(string name);
+        Task<ServiceResult<List<SkuEntity>?>> GetSkusAsync(List<string> skuList);
 
-        Task<ServiceResult<Sku>> AddSkuAsync(Sku sku);
+        Task<ServiceResult<SkuEntity>> GetSkusByCodeAsync(string sku);
+        Task<ServiceResult<SkuEntity>> GetSkusByNameAsync(string name);
 
-        Task<ServiceResult<Sku>> UpdateSkuAsync(int id, SkuUpdate sku);
-        Task<ServiceResult<Sku>> UpdateSkuAsync(string skuCode, SkuUpdate sku);
+        // Update
+        Task<ServiceResult<SkuEntity>> UpdateSkuAsync(string skuCode, SkuUpdate sku);
 
-        Task<ServiceResult<Sku>> DeleteSkuAsync(int id);
-        Task<ServiceResult<Sku>> DeleteSkuAsync(string skuCode);
+        // Delete
+        Task<ServiceResult<SkuEntity>> DeleteSkuAsync(string skuCode);
     }
 }

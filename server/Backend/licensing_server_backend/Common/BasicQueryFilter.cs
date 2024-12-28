@@ -1,5 +1,8 @@
 ﻿namespace Licensing.Common
 {
+    /// <summary>
+    /// Basic query filter for paginated queries.
+    /// </summary>
     public class BasicQueryFilter
     {
         public BasicQueryFilter()
@@ -11,4 +14,5 @@
         public int Limit { get; set; }
         public int Offset { get; set; }
     }
+
 }

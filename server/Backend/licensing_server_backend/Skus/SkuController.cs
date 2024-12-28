@@ -1,5 +1,6 @@
 ﻿using Licensing.Common;
 using Licensing.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
@@ -9,8 +10,9 @@ using System.Xml.Linq;
 
 namespace Licensing.Skus
 {
-    [Route("api/sku")]
+    [Route("api/v1/skus")]
     [ApiController]
+    [Authorize(Roles = "general, license-admin, admin")]
     public class SkuController : ControllerBase
     {
         private readonly ISkuService _skuService;
@@ -20,23 +22,22 @@ namespace Licensing.Skus
             _skuService = skuService;
         }
 
-        // GET: api/<SkuController>
+        // GET: api/v1/skus
         [HttpGet]
-        public async Task<IActionResult> GetSkus([FromQuery] BasicQueryFilter basicQueryFilter)
+        public async Task<IActionResult> GetSkus([FromBody] List<String>? skuList, [FromQuery] BasicQueryFilter basicQueryFilter)
         {
-            var result = await _skuService.GetSkusAsync(basicQueryFilter);
+            if( (skuList == null) || (skuList.Count == 0))
+            {
+                var basicResult = await _skuService.GetSkusAsync(basicQueryFilter);
+                return basicResult.ToActionResult();
+            }
+
+            var result = await _skuService.GetSkusAsync(skuList);
             return result.ToActionResult();
         }
 
-        // GET api/<SkuController>/5
-        [HttpGet("id/{id}")]
-        public async Task<IActionResult> GetSkuById(int id)
-        {
-            var result = await _skuService.GetSkusByIdAsync(id);
-            return result.ToActionResult();
 
-        }
-
+        // GET: api/v1/skus/name/{name}
         [HttpGet("name/{name}")]
         public async Task<IActionResult> GetSkuByName(string name)
         {
@@ -44,6 +45,7 @@ namespace Licensing.Skus
             return result.ToActionResult();
         }
 
+        // GET: api/v1/skus/{skuCode}
         [HttpGet("{skuCode}")]
         public async Task<IActionResult> GetSku(string skuCode)
         {
@@ -52,42 +54,30 @@ namespace Licensing.Skus
 
         }
 
-        // POST api/<SkuController>
+        // POST api/v1/skus
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] Sku value)
+        [Authorize(Roles = "license-admin, admin")]                         // Only admins can add new SKUs
+        public async Task<IActionResult> Post([FromBody] SkuEntity value)
         {
             var result = await _skuService.AddSkuAsync(value);
             return result.ToActionResult();
         }
 
-        // PUT api/<SkuController>/5
-        [HttpPut("id/{id}")]
-        [HttpPatch("id/{id}")]
-        public async Task<IActionResult> Put(int id, [FromBody] SkuUpdate value)
-        {
-            var result = await _skuService.UpdateSkuAsync(id, value);
-            return result.ToActionResult();
-        }
 
-        // PUT api/<SkuController>/5
+        // PUT api/v1/skus/{skuCode}
         [HttpPut("{skuCode}")]
         [HttpPatch("{skuCode}")]
+        [Authorize(Roles = "license-admin, admin")]                        // Only admins can update SKUs
         public async Task<IActionResult> Put(string skuCode, [FromBody] SkuUpdate value)
         {
             var result = await _skuService.UpdateSkuAsync(skuCode, value);
             return result.ToActionResult();
         }
 
-        // DELETE api/<SkuController>/5
-        [HttpDelete("id/{id}")]
-        public async Task<IActionResult> Delete(int id)
-        {
-            var result = await _skuService.DeleteSkuAsync(id);
-            return result.ToActionResult();
-        }
 
-        // DELETE api/<SkuController>/5
+        // DELETE api/v1/skus/{skuCode}
         [HttpDelete("{skuCode}")]
+        [Authorize(Roles = "license-admin, admin")]                       // Only admins can delete SKUs
         public async Task<IActionResult> Delete(string skuCode)
         {
             var result = await _skuService.DeleteSkuAsync(skuCode);
