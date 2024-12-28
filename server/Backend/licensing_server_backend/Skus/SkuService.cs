@@ -8,21 +8,29 @@ using Microsoft.Extensions.Logging;
 
 namespace Licensing.Skus
 {
-    public class SkuService : ISkuService
+    public class SkuService : BaseService<SkuService>, ISkuService
     {
-        private readonly LicensingContext _dbContext;
-        private readonly ILogger<SkuService> _logger;
+        public SkuService(ILogger<SkuService> logger, LicensingContext context) : base(logger, context) { }
 
-        public SkuService(ILogger<SkuService> logger, LicensingContext context)
+        /// <summary>
+        /// Add a new SKU
+        /// </summary>
+        /// <param name="sku"></param>
+        /// <returns></returns>
+        public async Task<ServiceResult<SkuEntity>> AddSkuAsync(SkuEntity sku)
         {
-            _dbContext = context;
-            _logger = logger;
-        }
+            try
+            {
+                var insSku = _dbContext.Skus.Add(sku);
+                int addCount = await _dbContext.SaveChangesAsync();
+                return new ServiceResult<SkuEntity>() { Status = ResultStatusCode.Success, Data = insSku.Entity };
+            }
+            catch (Exception ex)
+            {
+                return ReturnException<SkuEntity>(ex);
+            }
 
-        //public SkuService(LicensingContext context)
-        //{
-        //    _dbContext = context;
-        //}
+        }
 
         /// <summary>
         /// Get all SKUs
@@ -56,7 +64,7 @@ namespace Licensing.Skus
         }
 
         /// <summary>
-        /// Get all SKUs
+        /// Get SKU information from the sku list provided
         /// </summary>
         /// <returns></returns>
         public async Task<ServiceResult<List<SkuEntity>?>> GetSkusAsync(List<string> skuList)
@@ -142,27 +150,6 @@ namespace Licensing.Skus
             }
         }
 
-
-        /// <summary>
-        /// Add a new SKU
-        /// </summary>
-        /// <param name="sku"></param>
-        /// <returns></returns>
-        public async Task<ServiceResult<SkuEntity>> AddSkuAsync(SkuEntity sku)
-        {
-            try
-            {
-                var insSku = _dbContext.Skus.Add(sku);
-                int addCount = await _dbContext.SaveChangesAsync();
-                return new ServiceResult<SkuEntity>() { Status = ResultStatusCode.Success, Data = insSku.Entity };
-            }
-            catch (Exception ex)
-            {
-                return ReturnException<SkuEntity>(ex);
-            }
-
-        }
-
         /// <summary>
         /// Update a sku
         /// </summary>
@@ -216,21 +203,6 @@ namespace Licensing.Skus
             {
                 return ReturnException<SkuEntity>(ex);
             }
-        }
-
-
-        /// <summary>
-        /// Returns a service result based on the specified exception
-        /// </summary>
-        /// <param name="ex"></param>
-        private ServiceResult<T> ReturnException<T>(Exception ex, string logMessage = "")
-        {
-            if (String.IsNullOrWhiteSpace(logMessage))
-                _logger.LogError($"{logMessage}");
-            else
-                _logger.LogError($"{logMessage}: {ex.Message}");
-
-            return ExceptionHandler.ReturnException<T>(ex);
         }
     }
 }
