@@ -24,7 +24,7 @@ namespace Licensing.Keys
 
         // GET: api/v1/keys
         [HttpGet]
-        public async Task<ActionResult<KeyEntity>> Get(BasicQueryFilter queryFilter)
+        public async Task<ActionResult<KeyEntity>> Get([FromQuery] BasicQueryFilter queryFilter)
         {
             bool redact = true;
 
