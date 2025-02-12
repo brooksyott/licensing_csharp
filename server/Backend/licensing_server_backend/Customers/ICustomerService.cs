@@ -10,7 +10,7 @@ namespace Licensing.Customers
         // Read
         Task<ServiceResult<CustomerEntity>> GetByIdAsync(string customerId);
         Task<ServiceResult<CustomerEntity>> GetByNameAsync(string name);
-        Task<ServiceResult<PaginatedResults>> GetCustomersAsync(BasicQueryFilter filter);
+        Task<ServiceResult<PaginatedResults>> GetCustomersAsync(CustomerQueryFilter filter);
 
         // Update
         Task<ServiceResult<CustomerEntity>> UpdateCustomerAsync(string id, UpdateCustomerRequestBody customer);

@@ -17,4 +17,15 @@
         public string? Description { get; set; }
         public List<Feature>? Features { get; set; }
     }
+
+    public class UpdateLicenseRequestBody
+    {
+        public bool IsValid()
+        {
+            return !string.IsNullOrWhiteSpace(Label) && !string.IsNullOrWhiteSpace(Description);
+        }
+
+        public string? Label { get; set; }
+        public string? Description { get; set; }
+    }
 }

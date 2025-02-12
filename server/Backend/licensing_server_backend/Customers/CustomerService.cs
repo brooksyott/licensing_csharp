@@ -30,12 +30,12 @@ namespace Licensing.Customers
         /// </summary>
         /// <param name="filter">Filter containing pagination parameters.</param>
         /// <returns>Service result containing paginated customer data.</returns>
-        public async Task<ServiceResult<PaginatedResults>> GetCustomersAsync(BasicQueryFilter filter)
+        public async Task<ServiceResult<PaginatedResults>> GetCustomersAsync(CustomerQueryFilter filter)
         {
             try
             {
                 // Fetch customers from the database with pagination
-                var customers = await _dbContext.Customers.OrderBy(x => x.CreatedAt).Skip(filter.Offset).Take(filter.Limit).AsNoTracking().ToListAsync();
+                var customers = await _dbContext.Customers.Where(x => x.Visibility == filter.Visiblity).OrderBy(x => x.CreatedAt).Skip(filter.Offset).Take(filter.Limit).AsNoTracking().ToListAsync();
                 if (customers == null)
                 {
                     // Return an empty result if no customers are found
@@ -155,6 +155,7 @@ namespace Licensing.Customers
                 // Update the customer data
                 updatedCustomer.Name = customer.Name;
                 updatedCustomer.Description = customer.Description;
+                updatedCustomer.Visibility = customer.Visibility;
                 _dbContext.Customers.Update(updatedCustomer);
                 await _dbContext.SaveChangesAsync();
                 // Return the updated customer data

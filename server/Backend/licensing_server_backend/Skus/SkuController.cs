@@ -36,6 +36,20 @@ namespace Licensing.Skus
             return result.ToActionResult();
         }
 
+        // GET: api/v1/skus/bylist
+        [HttpPost("bylist")]
+        public async Task<IActionResult> GetSkusByPost([FromBody] List<String>? skuList, [FromQuery] BasicQueryFilter basicQueryFilter)
+        {
+            if ((skuList == null) || (skuList.Count == 0))
+            {
+                var basicResult = await _skuService.GetSkusAsync(basicQueryFilter);
+                return basicResult.ToActionResult();
+            }
+
+            var result = await _skuService.GetSkusAsync(skuList);
+            return result.ToActionResult();
+        }
+
 
         // GET: api/v1/skus/name/{name}
         [HttpGet("name/{name}")]

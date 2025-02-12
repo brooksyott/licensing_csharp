@@ -13,6 +13,10 @@ namespace Licensing.License
         Task<ServiceResult<PaginatedResults>> GetByCustomerIdAsync(string customerId, BasicQueryFilter filter);
         Task<ServiceResult<LicenseDetailsEntity>> GetByIdAsync(string licenseId);
 
+        // Update
+        Task<ServiceResult<LicenseEntity>>UpdateLicenseAsync(string licenseId, UpdateLicenseRequestBody licenseRequest);
+
+
         // Delete
         Task<ServiceResult<LicenseEntity>> DeleteLicenseAsync(string licenseId);
     }

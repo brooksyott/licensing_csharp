@@ -1,4 +1,5 @@
 ﻿using Licensing.Common;
+using Licensing.Customers;
 using Licensing.Data;
 using Licensing.Keys;
 using Licensing.Skus;
@@ -36,7 +37,7 @@ namespace Licensing.License
         /// <returns>Service result containing the generated license entity.</returns>
         public async Task<ServiceResult<LicenseEntity>> GenerateLicenseAsync(GenerateLicenseRequestBody licenseRequest)
         {
-            if (licenseRequest == null || String.IsNullOrEmpty(licenseRequest.IssuedBy) || String.IsNullOrEmpty(licenseRequest.CustomerId))
+            if (licenseRequest == null || String.IsNullOrEmpty(licenseRequest.IssuedBy) || String.IsNullOrEmpty(licenseRequest.CustomerId) || String.IsNullOrEmpty(licenseRequest.KeyId))
             {
                 return new ServiceResult<LicenseEntity>
                 {
@@ -61,8 +62,10 @@ namespace Licensing.License
                 return skuRequest;
             }
 
+            var jwtId = Guid.NewGuid().ToString();
+
             // Create the JWT
-            (var jwtRequest, var newJwt) = await BuildJWT(licenseRequest);
+            (var jwtRequest, var newJwt) = await BuildJWT(jwtId, licenseRequest);
             if (jwtRequest.Status != ResultStatusCode.Success)
             {
                 return jwtRequest;
@@ -72,10 +75,11 @@ namespace Licensing.License
             {
                 var addEntity = _dbContext.Licenses.Add(new LicenseEntity
                 {
-                    Id = Guid.NewGuid().ToString(),
+                    Id = jwtId,
                     Label = licenseRequest.Label,
                     IssuedBy = licenseRequest.IssuedBy,
                     License = newJwt,
+                    KeyId = licenseRequest.KeyId,
                     Description = licenseRequest.Description,
                     CustomerId = licenseRequest.CustomerId,
                 });
@@ -91,6 +95,33 @@ namespace Licensing.License
             catch (Exception ex)
             {
                 return ReturnException<LicenseEntity>(ex, "Error adding license to database");
+            }
+        }
+
+        public async Task<ServiceResult<LicenseEntity>> UpdateLicenseAsync(string licenseId, UpdateLicenseRequestBody licenseRequest)
+        {
+            try
+            {
+                // Fetch the existing customer from the database by ID
+                var updatedLicense = await _dbContext.Licenses.Where(x => x.Id == licenseId).AsNoTracking().SingleOrDefaultAsync();
+                if (updatedLicense == null)
+                {
+                    // Return a not found result if the customer does not exist
+                    return new ServiceResult<LicenseEntity>() { Status = ResultStatusCode.NotFound };
+                }
+
+                // Update the customer data
+                updatedLicense.Label = licenseRequest.Label;
+                updatedLicense.Description = licenseRequest.Description;
+                _dbContext.Licenses.Update(updatedLicense);
+                var dbResponse = await _dbContext.SaveChangesAsync();
+                // Return the updated customer data
+                return new ServiceResult<LicenseEntity>() { Status = ResultStatusCode.Success, Data = updatedLicense };
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions and return an error result
+                return ReturnException<LicenseEntity>(ex, $"Error updating customer");
             }
         }
 
@@ -147,6 +178,7 @@ namespace Licensing.License
                                             IssuedBy = lc.License.IssuedBy,
                                             License = lc.License.License,
                                             Description = lc.License.Description,
+                                            KeyId = lc.License.KeyId,
                                             Customer = new LicenseCustomerEntity()
                                             {
                                                 Id = lc.License.CustomerId,
@@ -212,6 +244,7 @@ namespace Licensing.License
                             IssuedBy = lc.License.IssuedBy,
                             License = lc.License.License,
                             Description = lc.License.Description,
+                            KeyId = lc.License.KeyId,
                             Customer = new LicenseCustomerEntity()
                             {
                                 Id = lc.License.CustomerId,
@@ -263,6 +296,7 @@ namespace Licensing.License
                                             IssuedBy = lc.License.IssuedBy,
                                             License = lc.License.License,
                                             Description = lc.License.Description,
+                                            KeyId = lc.License.KeyId,
                                             Customer = new LicenseCustomerEntity()
                                             {
                                                 Id = lc.License.CustomerId,
@@ -346,7 +380,7 @@ namespace Licensing.License
         /// </summary>
         /// <param name="licenseRequest"></param>
         /// <returns></returns>
-        private async Task<(ServiceResult<LicenseEntity>, string)> BuildJWT(GenerateLicenseRequestBody licenseRequest)
+        private async Task<(ServiceResult<LicenseEntity>, string)> BuildJWT(string id, GenerateLicenseRequestBody licenseRequest)
         {
             var key = await _keyService.DownloadPrivateKeyAsync(licenseRequest.KeyId);
             if (key == null || key.Data == null || key.Status != Common.ResultStatusCode.Success)
@@ -383,6 +417,7 @@ namespace Licensing.License
                     new Claim(JwtRegisteredClaimNames.Aud, licenseRequest.CustomerId),
                     new Claim(JwtRegisteredClaimNames.Sub, "JSI License"),
                     new Claim(JwtRegisteredClaimNames.Iss, licenseRequest.IssuedBy),
+                    new Claim(JwtRegisteredClaimNames.Jti, id),
                     new Claim("features", featuresJson),
                 }),
 

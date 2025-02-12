@@ -22,6 +22,7 @@ namespace Licensing.License
         public string? Label { get; set; }
         public string? IssuedBy { get; set; }
         public string? License { get; set; }
+        public string? KeyId { get; set; }
         public string? Description { get; set; }
         public LicenseCustomerEntity? Customer { get; set; }
 
@@ -35,6 +36,7 @@ namespace Licensing.License
             this.IssuedBy = license.IssuedBy;
             this.License = license.License;
             this.Description = license.Description;
+            this.KeyId = license.KeyId;
             Customer = new LicenseCustomerEntity();
         }
 

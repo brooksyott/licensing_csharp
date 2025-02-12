@@ -28,6 +28,9 @@ namespace Licensing.License
         [StringLength(255)] // Adjust max length if needed
         public required string IssuedBy { get; set; }
 
+        [Column("key_id")]
+        public required string KeyId { get; set; }
+
         [Required]
         [Column("license")]
         public required string License { get; set; }

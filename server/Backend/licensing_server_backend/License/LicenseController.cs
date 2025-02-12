@@ -54,6 +54,14 @@ namespace Licensing.License
             return licenseResult.ToActionResult();
         }
 
+        [HttpPut("{id}")]
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> Update(string id, [FromBody] UpdateLicenseRequestBody licenseRequest)
+        {
+            var licenseResult = await _licenseService.UpdateLicenseAsync(id, licenseRequest);
+            return licenseResult.ToActionResult();
+        }
+
         // DELETE: api/v1/licenses/{licenseId}
         [HttpDelete("{licenseId}")]
         public async Task<IActionResult> Delete(string licenseId)

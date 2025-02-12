@@ -23,9 +23,9 @@ namespace Licensing.Customers
 
         // GET: api/v1/customers
         [HttpGet]
-        public async Task<IActionResult> GetCustomers([FromQuery] BasicQueryFilter basicQueryFilter)
+        public async Task<IActionResult> GetCustomers([FromQuery] CustomerQueryFilter queryFilter)
         {
-            var result = await _customerService.GetCustomersAsync(basicQueryFilter);
+            var result = await _customerService.GetCustomersAsync(queryFilter);
             return result.ToActionResult();
         }
 

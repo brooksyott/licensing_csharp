@@ -21,6 +21,10 @@ namespace Licensing.Skus
         {
             try
             {
+                if (String.IsNullOrEmpty(sku.Id))
+                {
+                    return new ServiceResult<SkuEntity>() { Status = ResultStatusCode.BadRequest,  ErrorMessage =  new ErrorInformation("SKU ID must not be empty") };
+                }
                 var insSku = _dbContext.Skus.Add(sku);
                 int addCount = await _dbContext.SaveChangesAsync();
                 return new ServiceResult<SkuEntity>() { Status = ResultStatusCode.Success, Data = insSku.Entity };

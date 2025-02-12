@@ -1,4 +1,4 @@
-using HealthChecks.UI.Client;
+﻿using HealthChecks.UI.Client;
 using Licensing.auth;
 using Licensing.Auth;
 using Licensing.Customers;
@@ -49,6 +49,7 @@ public class Program
         ConfigureServices(builder.Services);
 
         var app = builder.Build();
+        app.UseCors("AllowAll"); // Apply CORS globally
 
         // Perform startup initialization
         InitializeApp(app);
@@ -85,6 +86,16 @@ public class Program
         services.AddScoped<ILicenseService, LicenseService>();
         services.AddScoped<ICustomerService, CustomerService>();
         services.AddScoped<IInternalAuthKeyService, InternalAuthKeyService>();
+
+        services.AddCors(options =>
+        {
+            options.AddPolicy("AllowAll", policy =>
+            {
+                policy.AllowAnyOrigin() // ❗ Allows requests from ANY domain
+                      .AllowAnyMethod() // ❗ Allows GET, POST, PUT, DELETE, etc.
+                      .AllowAnyHeader(); // ❗ Allows all headers
+            });
+        });
 
 
         // Add Swagger services
